@@ -1,6 +1,7 @@
 import axios from 'axios';
 import fpPromise from '@fingerprintjs/fingerprintjs';
 
+console.log("🚨 THE API URL REACT SEES IS:", process.env.REACT_APP_API_URL);
 // Create a central axios instance
 const API = axios.create({
     baseURL: 'http://localhost:5000/api', // Replace with your actual backend port
