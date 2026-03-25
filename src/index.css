@@ -7,6 +7,24 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* 1. Remove all default browser spacing */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* 2. Force the root elements to take up the full window */
+html,
+body,
+#root {
+  width: 100%;
+  height: 100vh;
+  background-color: #000000;
+  margin: 0;
+  /* Matches your right-side background */
+}
+
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
