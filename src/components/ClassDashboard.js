@@ -24,6 +24,7 @@ function ClassDashboard() {
     const [notices, setNotices] = useState([]);
     const [activeNotice, setActiveNotice] = useState(null);
     const [comment, setComment] = useState('');
+    const [liveSocket, setLiveSocket] = useState(null);
 
     const [showNoticeModal, setShowNoticeModal] = useState(false);
     const [attendanceDict, setAttendanceDict] = useState({});
@@ -115,6 +116,8 @@ function ClassDashboard() {
             }
         });
 
+        setLiveSocket(socket);
+
         socket.on("connect", () => console.log("🟢 SOCKET CONNECTED!"));
         socket.on("connect_error", (err) => console.error("🔴 SOCKET REJECTED:", err.message));
 
@@ -187,7 +190,10 @@ function ClassDashboard() {
                 // The api.js interceptor automatically attaches the physical device fingerprint here!
                 const res = await markStudentAttendance(id, inputCode, lat, lng);
                 setGeoMessage(res.data.message);
-                if (res.data.success) fetchClassData();
+                if (res.data.success) {
+                    fetchClassData();
+                    liveSocket?.emit('attendance_marked', id);
+                }
             } catch (err) {
                 setGeoMessage(err.response?.data?.message || "Server error.");
             }
@@ -227,6 +233,7 @@ function ClassDashboard() {
                 setActiveNotice(updatedNotice);
                 setNotices(notices.map(n => n.id === activeNotice.id ? updatedNotice : n));
                 setComment('');
+                liveSocket?.emit('send_message', { classId: id });
             }
         } catch (error) {
             console.error("Chat Error:", error);
