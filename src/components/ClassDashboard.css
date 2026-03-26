@@ -111,6 +111,10 @@
     .class-dashboard-container {
         height: 100dvh;
         overflow: hidden;
+        padding-bottom: env(safe-area-inset-bottom, 20px) !important;
+    }
+    .vertical-layout {
+        height: calc(100dvh - 100px) !important;
     }
 
     .class-header {
@@ -151,6 +155,9 @@
     .class-header {
         align-items: flex-start;
         /* Aligns things nicely if the title wraps to two lines */
+    }
+    .left-main-column {
+        padding-bottom: 120px !important; 
     }
 }
 
