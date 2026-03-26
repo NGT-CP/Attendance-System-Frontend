@@ -19,6 +19,7 @@ function ClassDashboard() {
     const [currentUser, setCurrentUser] = useState(null);
     const [isTeacher, setIsTeacher] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
+    const [showRosterModal, setShowRosterModal] = useState(false);
 
     const [notices, setNotices] = useState([]);
     const [activeNotice, setActiveNotice] = useState(null);
@@ -103,17 +104,17 @@ function ClassDashboard() {
     }, [timeLeft, sessionCode]);
 
     useEffect(() => {
-        const socket = io(process.env.REACT_APP_API_URL ? process.env.REACT_APP_API_URL.replace('/api', '') : "http://localhost:5000");
+        // ✅ FORCE WebSockets to bypass Render/Vercel polling restrictions
+        const socketUrl = process.env.REACT_APP_API_URL ? process.env.REACT_APP_API_URL.replace('/api', '') : "http://localhost:5000";
+        const socket = io(socketUrl, {
+            transports: ['websocket'], // <--- THIS IS THE FIX
+            upgrade: false
+        });
 
         socket.emit("join_class_room", id);
 
-        socket.on("receive_message", () => {
-            fetchClassData();
-        });
-
-        socket.on("update_attendance_count", () => {
-            fetchClassData();
-        });
+        socket.on("receive_message", () => fetchClassData());
+        socket.on("update_attendance_count", () => fetchClassData());
 
         return () => socket.disconnect();
     }, [id, fetchClassData]);
@@ -169,24 +170,45 @@ function ClassDashboard() {
 
     const handleMarkAttendance = async () => {
         if (!inputCode) return alert("Enter code");
-        setGeoMessage("Verifying...");
+
+        // Updated message to reflect the new Anti-Proxy Vault
+        setGeoMessage("Verifying Hardware & Location...");
         setIsLoading(true);
 
         const markSession = async (lat = null, lng = null) => {
             try {
+                // The api.js interceptor automatically attaches the physical device fingerprint here!
                 const res = await markStudentAttendance(id, inputCode, lat, lng);
                 setGeoMessage(res.data.message);
                 if (res.data.success) fetchClassData();
-            } catch (err) { setGeoMessage(err.response?.data?.message || "Server error."); }
+            } catch (err) {
+                setGeoMessage(err.response?.data?.message || "Server error.");
+            }
             setIsLoading(false);
         };
 
         if ("geolocation" in navigator) {
             navigator.geolocation.getCurrentPosition(
-                pos => markSession(pos.coords.latitude, pos.coords.longitude),
-                () => markSession()
+                pos => {
+                    // Stop students with spoofed or terrible GPS signals
+                    if (pos.coords.accuracy > 500) {
+                        setGeoMessage("Location signal too weak. Please turn on Wi-Fi or step outside.");
+                        setIsLoading(false);
+                        return;
+                    }
+                    console.log(`Student Location Accuracy: ${pos.coords.accuracy} meters`);
+                    markSession(pos.coords.latitude, pos.coords.longitude);
+                },
+                () => markSession(), // If location fails, send nulls (backend will reject if GPS is required)
+                {
+                    enableHighAccuracy: true, // Forces phone/laptop to use best GPS
+                    timeout: 10000,           // 10 second limit
+                    maximumAge: 0             // Strictly prohibits cached locations
+                }
             );
-        } else { markSession(); }
+        } else {
+            markSession();
+        }
     };
 
     const handleSendMessage = async () => {
@@ -247,6 +269,14 @@ function ClassDashboard() {
                         <h1>{classData.class_name}</h1>
                         <p className="teacher-name">Code: {classData.join_code}</p>
                     </div>
+                </div>
+                <div className="header-actions">
+                    <button className="join-class-btn" onClick={() => setShowRosterModal(true)}>
+                        👥 Members ({roster.length})
+                    </button>
+                    {isTeacher && (
+                        <button className="setting_btn" onClick={() => { setShowSettings(true); setNewName(classData.class_name); }}>⚙️</button>
+                    )}
                 </div>
                 {isTeacher && (
                     <button className="setting_btn" onClick={() => { setShowSettings(true); setNewName(classData.class_name); }}>⚙️</button>
@@ -373,28 +403,6 @@ function ClassDashboard() {
                         </div>
                     </div>
                 </div>
-
-                <div className="right-roster-column glass-panel">
-                    <h3>Members</h3>
-                    <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '15px' }}>{roster.length} Enrolled</p>
-
-                    <div className="roster-list">
-                        {roster.map(user => (
-                            <div key={user.id} className="roster-item">
-                                <span className="roster-name-scroll">
-                                    {user.name}
-                                    {user.isTeacher && <span className="teacher-tag">Teacher</span>}
-                                </span>
-                                {isTeacher && !user.isTeacher && (
-                                    <span className={`roster-percent ${user.percent < 75 ? 'danger-text' : 'success-text'}`}>
-                                        {user.percent}%
-                                    </span>
-                                )}
-                            </div>
-                        ))}
-                        {roster.length === 0 && <p style={{ color: 'var(--text-muted)', fontSize: '13px', marginTop: '10px' }}>No students joined yet.</p>}
-                    </div>
-                </div>
             </div>
 
             {/* ✅ NEW: Notice Modal Component injected here */}
@@ -429,6 +437,38 @@ function ClassDashboard() {
                         </div>
                         <div className="modal-actions" style={{ marginTop: '25px' }}>
                             <button className="cancel-btn" onClick={() => setShowSettings(false)}>Close Settings</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {showRosterModal && (
+                <div className="modal-overlay" onClick={() => setShowRosterModal(false)}>
+                    <div className="modal-content glass-card" onClick={e => e.stopPropagation()} style={{ maxHeight: '80vh', display: 'flex', flexDirection: 'column' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                            <h2>Class Members</h2>
+                            <button className="cancel-btn" onClick={() => setShowRosterModal(false)}>✕</button>
+                        </div>
+
+                        <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '15px' }}>{roster.length} Enrolled Students</p>
+
+                        <div className="roster-list" style={{ overflowY: 'auto', paddingRight: '10px' }}>
+                            {roster.map(user => (
+                                <div key={user.id} className="roster-item" style={{ marginBottom: '10px' }}>
+                                    <span className="roster-name-scroll">
+                                        <div className="avatar" style={{ width: '30px', height: '30px', fontSize: '12px', marginRight: '10px' }}>
+                                            {user.name.charAt(0).toUpperCase()}
+                                        </div>
+                                        {user.name}
+                                        {user.isTeacher && <span className="teacher-tag" style={{ marginLeft: '10px' }}>Teacher</span>}
+                                    </span>
+                                    {isTeacher && !user.isTeacher && (
+                                        <span className={`roster-percent ${user.percent < 75 ? 'danger-text' : 'success-text'}`}>
+                                            {user.percent}%
+                                        </span>
+                                    )}
+                                </div>
+                            ))}
+                            {roster.length === 0 && <p className="text-muted">No students joined yet.</p>}
                         </div>
                     </div>
                 </div>

@@ -87,18 +87,71 @@
 }
 
 /* --- GRID LAYOUT --- */
+/* Update this existing class */
 .vertical-layout {
-    display: grid;
-    grid-template-columns: 2.5fr 1fr;
-    gap: 5px;
-    height: calc(100vh - 120px);
+    display: flex;
+    /* Changed from grid since we removed the right column */
+    flex-direction: column;
+    height: calc(100dvh - 120px);
+    /* dvh fixes mobile cutoffs */
+    padding-bottom: 20px;
 }
 
+/* Let the left column take the full space now */
 .left-main-column {
-    display: flex;
-    flex-direction: column;
+    flex: 1;
     overflow-y: auto;
     padding-right: 5px;
+    padding-bottom: 40px;
+    /* Extra breathing room at the bottom for mobile scrolling */
+}
+
+/* Mobile specific fixes */
+@media screen and (max-width: 768px) {
+    .class-dashboard-container {
+        height: 100dvh;
+        overflow: hidden;
+    }
+
+    .class-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+        /* Adds breathing room between title and buttons */
+        margin-bottom: 20px;
+    }
+
+    /* 2. Make the actions take up the row below the title */
+    .header-actions {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+    }
+
+    /* 3. Tame the massive Members button */
+    .header-actions .join-class-btn {
+        flex: 1;
+        /* Makes it look like a sleek, full-width mobile button */
+        padding: 10px !important;
+        font-size: 14px !important;
+        height: auto !important;
+        justify-content: center;
+        white-space: nowrap;
+    }
+
+    /* 4. Keep the settings gear nicely proportioned */
+    .header-actions .setting_btn {
+        padding: 10px 15px !important;
+        height: auto !important;
+        flex-shrink: 0;
+    }
+
+    /* 3. Ensure the title area has room to breathe */
+    .class-header {
+        align-items: flex-start;
+        /* Aligns things nicely if the title wraps to two lines */
+    }
 }
 
 /* Custom Scrollbar for the left column */

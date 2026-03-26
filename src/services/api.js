@@ -2,6 +2,7 @@ import axios from 'axios';
 import fpPromise from '@fingerprintjs/fingerprintjs';
 
 console.log("🚨 THE API URL REACT SEES IS:", process.env.REACT_APP_API_URL);
+
 // Create a central axios instance
 const API = axios.create({
     baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5000/api',
@@ -9,14 +10,19 @@ const API = axios.create({
 
 // Generate or retrieve the Device Fingerprint
 const getDeviceFingerprint = async () => {
-    let fp = localStorage.getItem('device_fp');
-    if (!fp) {
-        const fpAgent = await fpPromise.load();
-        const result = await fpAgent.get();
-        fp = result.visitorId;
-        localStorage.setItem('device_fp', fp); // Save it so we don't recalculate
+    try {
+        let fp = localStorage.getItem('device_fp');
+        if (!fp) {
+            const fpAgent = await fpPromise.load();
+            const result = await fpAgent.get();
+            fp = result.visitorId;
+            localStorage.setItem('device_fp', fp); // Save it so we don't recalculate
+        }
+        return fp;
+    } catch (err) {
+        console.warn("Failed to generate fingerprint:", err);
+        return 'UNKNOWN_DEVICE_FRONTEND'; // Fallback so the request doesn't crash
     }
-    return fp;
 };
 
 // Automatically attach the JWT token AND the Device Fingerprint to every request
@@ -28,16 +34,14 @@ API.interceptors.request.use(async (req) => {
     }
 
     // Attach Physical Device ID
-    try {
-        const deviceId = await getDeviceFingerprint();
-        if (deviceId) {
-            req.headers['x-device-fingerprint'] = deviceId;
-        }
-    } catch (err) {
-        console.warn("Fingerprint error:", err);
+    const deviceId = await getDeviceFingerprint();
+    if (deviceId) {
+        req.headers['x-device-fingerprint'] = deviceId;
     }
 
     return req;
+}, (error) => {
+    return Promise.reject(error);
 });
 
 // --- DASHBOARD ROUTES ---
@@ -52,9 +56,10 @@ export const createClass = (className) => API.post('/classes/create', { class_na
 export const joinClass = (joinCode) => API.post('/classes/join', { join_code: joinCode });
 
 // --- ATTENDANCE ROUTES ---
-export const startAttendanceSession = (classId, lat, lng) =>
-    API.post(`/classes/${classId}/attendance/start`, { lat, lng });
+export const startAttendanceSession = (classId, lat, lng, requireGps = true) =>
+    API.post(`/classes/${classId}/attendance/start`, { lat, lng, requireGps });
 
+// Note: We do NOT need to pass deviceFingerprint here because the interceptor handles it!
 export const markStudentAttendance = (classId, code, lat, lng) =>
     API.post(`/classes/${classId}/attendance/mark`, { code, lat, lng });
 

@@ -101,12 +101,6 @@
     white-space: nowrap;
 }
 
-.nav-item:hover,
-.nav-item.active {
-    background: var(--glass-bg);
-    color: var(--text-main);
-}
-
 .nav-item.active {
     border-left: 3px solid var(--accent);
 }
@@ -469,6 +463,18 @@
     font-weight: 600;
 }
 
+.notice-card {
+    transition: all 0.3s ease;
+}
+
+.notice-card:hover {
+    border-color: rgba(111, 92, 194, 0.5);
+    /* Softer purple border */
+    background: rgba(111, 92, 194, 0.03);
+    /* Barely visible tint */
+    transform: translateY(-2px);
+}
+
 .card-header {
     display: flex;
     justify-content: space-between;
@@ -561,14 +567,21 @@
 @media screen and (max-width: 768px) {
 
     .main-content {
-        padding: 20px 15px;
+        padding: 20px 10px;
+        overflow-x: hidden;
+    }
+
+    /* 2. Give the 'Your Enrolled Subjects' title its own breathing room */
+    .section-title {
+        margin-top: 40px !important;
+        padding-top: 10px;
     }
 
     /* --- SIDEBAR LOGIC --- */
     .sidebar {
-        width: 65px;
+        width: 70px;
         /* Default closed size (just enough for icons) */
-        padding: 20px 10px;
+        padding: 20px 8px;
         cursor: pointer;
         z-index: 50;
     }
@@ -617,7 +630,15 @@
     }
 
     .nav-item {
-        justify-content: flex-start;
+        transition: background 0.3s ease, color 0.3s ease, transform 0.2s ease;
+    }
+
+    .nav-item:hover {
+        background: rgba(255, 255, 255, 0.04);
+        /* Much softer background */
+        color: var(--text-main);
+        transform: translateX(4px);
+        /* Smooth little slide effect */
     }
 
     /* --- TOP BAR ADJUSTMENTS --- */
@@ -644,14 +665,37 @@
 
     /* --- GRAPH & TABLE ADJUSTMENTS --- */
     .graph-card {
-        padding: 10px;
-        height: 250px !important;
-        /* Smaller graph on mobile */
+        height: 320px !important;
+        /* Give the canvas enough room */
+        margin-bottom: 40px !important;
+        /* Force a huge gap below the card */
+        padding-bottom: 35px !important;
+        /* Give the 'Months' text room to sit inside the card */
     }
 
     /* Keeps profile form looking nice on mobile */
     .profile-form-grid {
         grid-template-columns: 1fr;
+    }
+
+    .user-profile-mini.clickable {
+        padding: 8px !important;
+        justify-content: center;
+        /* Forces the avatar to the middle */
+        width: 100%;
+        margin-left: 0;
+    }
+
+    /* 3. Make sure the navigation icons also sit perfectly in the center when closed */
+    .sidebar:not(.expanded) .nav-item {
+        justify-content: center;
+        padding: 12px 0 !important;
+    }
+
+    /* 4. Restore the icon alignment when the sidebar is tapped open */
+    .sidebar.expanded .nav-item {
+        justify-content: flex-start;
+        padding: 12px 15px !important;
     }
 }
 
