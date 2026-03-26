@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { startAttendanceSession, markStudentAttendance, updateClassName, regenerateClassCode, deleteClass, markClassCancelled } from '../services/api';
 import './ClassDashboard.css';
-import CreateNotice from './CreateNotice'; // ✅ Importing the new file!
+import CreateNotice from './CreateNotice';
 import API from '../services/api';
 import io from 'socket.io-client';
 
@@ -24,7 +24,10 @@ function ClassDashboard() {
     const [notices, setNotices] = useState([]);
     const [activeNotice, setActiveNotice] = useState(null);
     const [comment, setComment] = useState('');
-    const [liveSocket, setLiveSocket] = useState(null);
+
+    // ✅ FIX: Replaced liveSocket state with a stable ref and a refresh trigger
+    const socketRef = useRef(null);
+    const [refreshTrigger, setRefreshTrigger] = useState(0);
 
     const [showNoticeModal, setShowNoticeModal] = useState(false);
     const [attendanceDict, setAttendanceDict] = useState({});
@@ -92,8 +95,17 @@ function ClassDashboard() {
         }
     }, [id, navigate]);
 
+    // Initial Load
     useEffect(() => { fetchClassData(); }, [fetchClassData]);
 
+    // ✅ FIX: Triggers a silent UI refresh when the socket increments the counter
+    useEffect(() => {
+        if (refreshTrigger > 0) {
+            fetchClassData();
+        }
+    }, [refreshTrigger, fetchClassData]);
+
+    // Timer Logic
     useEffect(() => {
         if (timeLeft > 0) {
             const timerId = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
@@ -104,40 +116,42 @@ function ClassDashboard() {
         }
     }, [timeLeft, sessionCode]);
 
+    // ✅ FIX: The Bulletproof Socket Connection
     useEffect(() => {
         const socketUrl = process.env.REACT_APP_API_URL ? process.env.REACT_APP_API_URL.replace('/api', '') : "http://localhost:5000";
         const token = localStorage.getItem('token');
 
-        // ✅ FIX 1: Let Render negotiate via polling first, then upgrade
         const socket = io(socketUrl, {
             transports: ['polling', 'websocket'],
             auth: { token: token },
-            extraHeaders: { Authorization: `Bearer ${token}` }
+            extraHeaders: { Authorization: `Bearer ${token}` },
+            reconnection: true,
+            reconnectionAttempts: 5,
+            reconnectionDelay: 2000
         });
+
+        // Store active connection safely so buttons can always reach it
+        socketRef.current = socket;
 
         socket.on("connect", () => {
             console.log("🟢 SOCKET CONNECTED TO SERVER!");
-            // ✅ FIX 3: Emit 'join_class_room' ONLY after connection is established
             socket.emit("join_class_room", id);
         });
 
         socket.on("connect_error", (err) => console.error("🔴 SOCKET REJECTED:", err.message));
 
-        setLiveSocket(socket);
-
         socket.on("receive_message", () => {
-            console.log("🔄 Chat updated live!");
-            fetchClassData();
+            console.log("🔄 Chat update signal received!");
+            setRefreshTrigger(prev => prev + 1); // Increments to trigger UI update
         });
 
         socket.on("update_attendance_count", () => {
-            console.log("🔄 Attendance updated live!");
-            fetchClassData();
+            console.log("🔄 Attendance update signal received!");
+            setRefreshTrigger(prev => prev + 1); // Increments to trigger UI update
         });
 
         return () => socket.disconnect();
-    }, [id, fetchClassData]);
-
+    }, [id]); // 🚨 fetchClassData is GONE from here, ending the reconnect loop forever
 
     const handlePrevMonth = () => setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1));
     const handleNextMonth = () => setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1));
@@ -160,7 +174,10 @@ function ClassDashboard() {
         if (!window.confirm("Mark today as a cancelled class/leave? This will appear orange for all students.")) return;
         try {
             const res = await markClassCancelled(id);
-            if (res.data.success) fetchClassData();
+            if (res.data.success) {
+                fetchClassData();
+                socketRef.current?.emit('attendance_marked', id); // Inform students
+            }
         } catch (err) { alert("Failed to mark leave"); }
     };
 
@@ -189,19 +206,17 @@ function ClassDashboard() {
 
     const handleMarkAttendance = async () => {
         if (!inputCode) return alert("Enter code");
-
-        // Updated message to reflect the new Anti-Proxy Vault
         setGeoMessage("Verifying Hardware & Location...");
         setIsLoading(true);
 
         const markSession = async (lat = null, lng = null) => {
             try {
-                // The api.js interceptor automatically attaches the physical device fingerprint here!
                 const res = await markStudentAttendance(id, inputCode, lat, lng);
                 setGeoMessage(res.data.message);
                 if (res.data.success) {
                     fetchClassData();
-                    liveSocket?.emit('attendance_marked', id);
+                    console.log("🚀 Firing Socket Event to Server!");
+                    socketRef.current?.emit('attendance_marked', id); // ✅ Uses ref
                 }
             } catch (err) {
                 setGeoMessage(err.response?.data?.message || "Server error.");
@@ -212,7 +227,6 @@ function ClassDashboard() {
         if ("geolocation" in navigator) {
             navigator.geolocation.getCurrentPosition(
                 pos => {
-                    // Stop students with spoofed or terrible GPS signals
                     if (pos.coords.accuracy > 500) {
                         setGeoMessage("Location signal too weak. Please turn on Wi-Fi or step outside.");
                         setIsLoading(false);
@@ -221,11 +235,11 @@ function ClassDashboard() {
                     console.log(`Student Location Accuracy: ${pos.coords.accuracy} meters`);
                     markSession(pos.coords.latitude, pos.coords.longitude);
                 },
-                () => markSession(), // If location fails, send nulls (backend will reject if GPS is required)
+                () => markSession(),
                 {
-                    enableHighAccuracy: true, // Forces phone/laptop to use best GPS
-                    timeout: 10000,           // 10 second limit
-                    maximumAge: 0             // Strictly prohibits cached locations
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 0
                 }
             );
         } else {
@@ -242,7 +256,9 @@ function ClassDashboard() {
                 setActiveNotice(updatedNotice);
                 setNotices(notices.map(n => n.id === activeNotice.id ? updatedNotice : n));
                 setComment('');
-                liveSocket?.emit('send_message', { classId: id });
+
+                console.log("🚀 Firing Chat Socket Event!");
+                socketRef.current?.emit('send_message', { classId: id }); // ✅ Uses ref
             }
         } catch (error) {
             console.error("Chat Error:", error);
@@ -425,7 +441,6 @@ function ClassDashboard() {
                 </div>
             </div>
 
-            {/* ✅ NEW: Notice Modal Component injected here */}
             {showNoticeModal && (
                 <CreateNotice
                     classId={id}
@@ -461,6 +476,7 @@ function ClassDashboard() {
                     </div>
                 </div>
             )}
+
             {showRosterModal && (
                 <div className="modal-overlay" onClick={() => setShowRosterModal(false)}>
                     <div className="modal-content glass-card" onClick={e => e.stopPropagation()} style={{ maxHeight: '80vh', display: 'flex', flexDirection: 'column' }}>
