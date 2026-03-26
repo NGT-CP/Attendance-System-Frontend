@@ -1,11 +1,8 @@
 /* --- 1. GLOBAL RESET & VARIABLES --- */
 :root {
     --bg-dark: #050507;
-    /* Obsidian Black */
     --bg-panel: #0a0a0c;
-    /* Sidebar/Cards */
     --accent: #6F5CC2;
-    /* Nebula Purple */
     --accent-glow: rgba(111, 92, 194, 0.4);
     --text-main: #ffffff;
     --text-muted: #8A86A2;
@@ -24,6 +21,8 @@
 /* --- 2. LAYOUT STRUCTURE --- */
 .dashboard-container {
     display: flex;
+    flex-direction: row;
+    /* ✅ Forces side-by-side even on mobile */
     height: 100vh;
     width: 100vw;
     background: radial-gradient(circle at top right, #1a1a2e, #050507 60%);
@@ -40,6 +39,10 @@
     display: flex;
     flex-direction: column;
     padding: 20px;
+    flex-shrink: 0;
+    /* Prevents sidebar from being crushed */
+    transition: width 0.3s ease;
+    /* Smooth sliding */
 }
 
 .brand-logo {
@@ -48,6 +51,7 @@
     color: var(--accent);
     margin-bottom: 40px;
     letter-spacing: -1px;
+    overflow: hidden;
 }
 
 .user-profile-mini {
@@ -57,11 +61,14 @@
     padding-bottom: 30px;
     border-bottom: 1px solid var(--border-color);
     margin-bottom: 30px;
+    overflow: hidden;
 }
 
 .avatar {
     width: 40px;
     height: 40px;
+    min-width: 40px;
+    /* Keeps avatar perfectly round */
     background: var(--accent);
     border-radius: 10px;
     display: flex;
@@ -90,6 +97,8 @@
     transition: 0.2s;
     text-align: left;
     width: 100%;
+    overflow: hidden;
+    white-space: nowrap;
 }
 
 .nav-item:hover,
@@ -104,11 +113,16 @@
 
 /* --- 4. MAIN CONTENT AREA --- */
 .main-content {
-    flex-grow: 1;
+    flex: 1;
+    /* ✅ This auto-squishes the content area */
     display: flex;
     flex-direction: column;
     padding: 40px;
     overflow-y: auto;
+    overflow-x: hidden;
+    min-width: 0;
+    /* ✅ Prevents flexbox explosion */
+    transition: width 0.3s ease;
 }
 
 .top-bar {
@@ -116,6 +130,8 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: 40px;
+    flex-wrap: wrap;
+    gap: 15px;
 }
 
 .header-title h1 {
@@ -140,6 +156,7 @@
     cursor: pointer;
     font-weight: 600;
     box-shadow: 0 4px 15px var(--accent-glow);
+    white-space: nowrap;
 }
 
 /* --- 5. CARDS & GRIDS --- */
@@ -153,7 +170,7 @@
 
 .grid-layout {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: 25px;
     margin-top: 20px;
 }
@@ -166,6 +183,22 @@
     color: var(--accent);
     font-size: 12px;
     font-weight: bold;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.stat-value {
+    font-size: 32px;
+    font-weight: bold;
+    margin: 10px 0;
+}
+
+.text-accent {
+    color: var(--accent);
 }
 
 /* --- 6. EMPTY STATES & MODALS --- */
@@ -206,7 +239,8 @@
 }
 
 .modal-content {
-    width: 400px;
+    width: 90%;
+    max-width: 400px;
     padding: 30px;
     background: var(--bg-panel);
     border: 1px solid var(--border-color);
@@ -243,6 +277,7 @@
     padding-top: 20px;
     border-top: 1px solid var(--border-color);
     margin-top: auto;
+    overflow: hidden;
 }
 
 .logout-btn {
@@ -258,6 +293,7 @@
     cursor: pointer;
     transition: all 0.3s ease;
     font-weight: 500;
+    white-space: nowrap;
 }
 
 .logout-btn:hover {
@@ -266,15 +302,7 @@
     border-color: rgba(255, 77, 77, 0.2);
 }
 
-.logout-btn svg {
-    transition: transform 0.2s ease;
-}
-
-.logout-btn:hover svg {
-    transform: translateX(3px);
-}
-
-/* --- PROFILE BUTTON EFFECTS --- */
+/* PROFILE BUTTON EFFECTS */
 .user-profile-mini.clickable {
     cursor: pointer;
     transition: all 0.2s ease;
@@ -286,7 +314,6 @@
 .user-profile-mini.clickable:hover {
     background: var(--glass-bg);
     border-color: var(--border-color);
-    transform: translateY(-2px);
 }
 
 .view-profile-text {
@@ -295,10 +322,9 @@
     font-weight: 600;
 }
 
-/* --- PROFILE MODAL SPECIFICS --- */
+/* PROFILE MODAL */
 .profile-modal {
     text-align: center;
-    align-items: center;
 }
 
 .large-avatar {
@@ -306,6 +332,195 @@
     height: 80px;
     font-size: 32px;
     margin: 0 auto 15px auto;
+}
+
+.profile-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-top: 20px;
+    text-align: left;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.form-group label {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.form-group.full-width {
+    grid-column: 1 / -1;
+}
+
+.edit-btn {
+    background: transparent;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    padding: 6px 15px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    margin-top: 10px;
+    transition: 0.2s;
+}
+
+.edit-btn:hover {
+    background: var(--accent);
+    color: white;
+}
+
+/* OVERVIEW TABLE */
+.table-container {
+    margin-top: 20px;
+    padding: 0;
+    overflow-x: auto;
+    /* ✅ Prevents table from breaking screen width */
+    width: 100%;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    min-width: 500px;
+}
+
+.data-table th {
+    background: rgba(0, 0, 0, 0.2);
+    padding: 15px 20px;
+    font-size: 13px;
+    color: var(--text-muted);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.data-table td {
+    padding: 15px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Attendance Pill */
+.attendance-pill {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: bold;
+    display: inline-block;
+}
+
+.attendance-high {
+    background: rgba(0, 255, 136, 0.15);
+    color: #00ff88;
+}
+
+.attendance-med {
+    background: rgba(255, 193, 7, 0.15);
+    color: #ffc107;
+}
+
+.attendance-low {
+    background: rgba(255, 77, 77, 0.15);
+    color: #ff4d4d;
+}
+
+.mark-btn {
+    background-color: transparent;
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    padding: 5px 10px;
+    cursor: pointer;
+}
+
+.mark-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* NOTICES */
+.clickable-notice {
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-bottom: 15px;
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
+.clickable-notice:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+    background: rgba(111, 92, 194, 0.05);
+}
+
+.notice-meta {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-top: 5px;
+}
+
+.notice-class-tag {
+    color: var(--accent);
+    font-weight: 600;
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.view-details-btn {
+    width: 100%;
+    padding: 10px;
+    background: rgba(111, 92, 194, 0.1);
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    margin-top: 15px;
+    transition: all 0.2s ease;
+}
+
+.view-details-btn:hover {
+    background: var(--accent);
+    color: white;
+    box-shadow: 0 4px 12px var(--accent-glow);
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.create-class-btn {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-main);
+    border: 1px solid var(--border-color);
+    padding: 10px 20px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.create-class-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: var(--text-muted);
+    transform: translateY(-2px);
 }
 
 .role-badge {
@@ -340,199 +555,103 @@
     margin-top: 4px;
 }
 
-/* --- HEADER ACTIONS & SECONDARY BUTTON --- */
-.header-actions {
-    display: flex;
-    align-items: center;
-    gap: 15px;
+/* =========================================================
+   📱 MOBILE & TABLET RESPONSIVENESS (The Magic Squish Logic)
+   ========================================================= */
+@media screen and (max-width: 768px) {
+
+    .main-content {
+        padding: 20px 15px;
+    }
+
+    /* --- SIDEBAR LOGIC --- */
+    .sidebar {
+        width: 65px;
+        /* Default closed size (just enough for icons) */
+        padding: 20px 10px;
+        cursor: pointer;
+        z-index: 50;
+    }
+
+    /* Hide text elements smoothly when collapsed */
+    .sidebar:not(.expanded) .menu-text,
+    .sidebar:not(.expanded) .user-info,
+    .sidebar:not(.expanded) .brand-logo {
+        opacity: 0;
+        width: 0;
+        display: none;
+    }
+
+    /* Expand the sidebar on tap */
+    .sidebar.expanded {
+        width: 220px;
+        /* Expands to show text */
+        position: absolute;
+        /* Floats over the content so it doesn't crush the graph too much */
+        height: 100vh;
+        box-shadow: 5px 0 25px rgba(0, 0, 0, 0.8);
+    }
+
+    /* Show text elements smoothly when expanded */
+    .sidebar.expanded .menu-text,
+    .sidebar.expanded .user-info,
+    .sidebar.expanded .brand-logo {
+        opacity: 1;
+        width: auto;
+        display: block;
+        animation: fadeIn 0.3s forwards;
+    }
+
+    .sidebar.expanded .user-info {
+        margin-left: 10px;
+    }
+
+    .nav-item {
+        justify-content: flex-start;
+    }
+
+    /* --- TOP BAR ADJUSTMENTS --- */
+    .top-bar {
+        flex-direction: column;
+        align-items: flex-start;
+        margin-bottom: 25px;
+    }
+
+    .header-actions {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .cancel-btn.create-btn,
+    .join-class-btn {
+        flex: 1;
+        /* Makes buttons equal width side-by-side */
+        justify-content: center;
+        padding: 12px 10px;
+        font-size: 14px;
+    }
+
+    /* --- GRAPH & TABLE ADJUSTMENTS --- */
+    .graph-card {
+        padding: 10px;
+        height: 250px !important;
+        /* Smaller graph on mobile */
+    }
+
+    /* Keeps profile form looking nice on mobile */
+    .profile-form-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
-.create-class-btn {
-    background: rgba(255, 255, 255, 0.05);
-    color: var(--text-main);
-    border: 1px solid var(--border-color);
-    padding: 10px 20px;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    cursor: pointer;
-    font-weight: 600;
-    transition: all 0.2s ease;
-}
+/* Simple fade animation for text */
+@keyframes fadeIn {
+    0% {
+        opacity: 0;
+    }
 
-.create-class-btn:hover {
-    background: rgba(255, 255, 255, 0.1);
-    border-color: var(--text-muted);
-    transform: translateY(-2px);
-}
-
-.card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid var(--border-color);
-}
-
-.view-details-btn {
-    width: 100%;
-    padding: 10px;
-    background: rgba(111, 92, 194, 0.1);
-    color: var(--accent);
-    border: 1px solid var(--accent);
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: 600;
-    margin-top: 15px;
-    transition: all 0.2s ease;
-}
-
-.view-details-btn:hover {
-    background: var(--accent);
-    color: white;
-    box-shadow: 0 4px 12px var(--accent-glow);
-}
-
-/* --- CLICKABLE DASHBOARD NOTICES --- */
-.clickable-notice {
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.clickable-notice:hover {
-    border-color: var(--accent, #6f5cc2);
-    transform: translateY(-2px);
-    background: rgba(111, 92, 194, 0.05);
-}
-
-.notice-meta {
-    font-size: 13px;
-    color: var(--text-muted);
-    margin-top: 5px;
-}
-
-.notice-class-tag {
-    color: var(--accent, #6f5cc2);
-    font-weight: 600;
-    letter-spacing: 0.5px;
-}
-
-/* --- PROFILE EDIT MODAL --- */
-.profile-form-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 15px;
-    margin-top: 20px;
-    text-align: left;
-}
-
-.form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-}
-
-.form-group label {
-    font-size: 12px;
-    color: var(--text-muted);
-    font-weight: bold;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.form-group.full-width {
-    grid-column: 1 / -1;
-}
-
-.edit-btn {
-    background: transparent;
-    border: 1px solid var(--accent);
-    color: var(--accent);
-    padding: 6px 15px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 13px;
-    margin-top: 10px;
-    transition: 0.2s;
-}
-
-.edit-btn:hover {
-    background: var(--accent);
-    color: white;
-}
-
-/* --- OVERVIEW TABLE IMPROVEMENTS --- */
-.table-container {
-    margin-top: 20px;
-    padding: 0;
-    overflow: hidden;
-}
-
-.data-table {
-    width: 100%;
-    border-collapse: collapse;
-    text-align: left;
-}
-
-.data-table th {
-    background: rgba(0, 0, 0, 0.2);
-    padding: 15px 20px;
-    font-size: 13px;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.data-table td {
-    padding: 15px 20px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    vertical-align: middle;
-}
-
-.data-table tr:last-child td {
-    border-bottom: none;
-}
-
-.data-table tr:hover {
-    background: rgba(255, 255, 255, 0.02);
-}
-
-/* Attendance Pill */
-.attendance-pill {
-    padding: 4px 10px;
-    border-radius: 12px;
-    font-size: 12px;
-    font-weight: bold;
-    display: inline-block;
-}
-
-.attendance-high {
-    background: rgba(0, 255, 136, 0.15);
-    color: #00ff88;
-}
-
-.attendance-med {
-    background: rgba(255, 193, 7, 0.15);
-    color: #ffc107;
-}
-
-.attendance-low {
-    background: rgba(255, 77, 77, 0.15);
-    color: #ff4d4d;
-}
-
-/* --- RECHARTS GRAPH CARD CONTAINER --- */
-.graph-card {
-    margin-top: 25px;
-    padding: 25px;
-}
-.mark-btn{
-    background-color: transparent;
-    color: white;
-    border-width: 5px;
-    border-color: 255,255,255,255,0.02;
-    border-radius: 10px;
+    100% {
+        opacity: 1;
+    }
 }

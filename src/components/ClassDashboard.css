@@ -18,7 +18,8 @@
     align-items: center;
     margin-bottom: 25px;
 }
-.setting_btn{
+
+.setting_btn {
     background: rgba(255, 255, 255, 0.01);
     border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
     color: var(--text-main, #ffffff);
@@ -376,10 +377,12 @@
 /* --- RIGHT SIDE ROSTER --- */
 .right-roster-column {
     display: flex;
-    margin-left: 70px;
-    width: 80%;
     flex-direction: column;
     overflow-y: hidden;
+    margin-left: 15px;
+    /* ✅ A much smaller, cleaner gap */
+    width: 100%;
+    /* ✅ Lets the grid handle the width naturally */
 }
 
 .roster-list {
@@ -414,19 +417,47 @@
     background: rgba(255, 255, 255, 0.06);
 }
 
+/* --- FIX: Horizontal Scrolling for Long Names --- */
 .roster-name-scroll {
     display: flex;
     align-items: center;
     gap: 10px;
     white-space: nowrap;
     overflow-x: auto;
-    scrollbar-width: none;
     font-size: 14px;
     font-weight: 500;
+    flex: 1;
+    /* Takes up available space naturally */
+    max-width: 80%;
+    /* Prevents the name from pushing the percentage off-screen */
+    padding-bottom: 6px;
+    /* Gives the scrollbar room to breathe */
+
+    /* Firefox support */
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
 }
 
+/* Bring back the visual scrollbar for Chrome/Edge/Safari */
 .roster-name-scroll::-webkit-scrollbar {
-    display: none;
+    height: 4px;
+    /* Nice, thin horizontal scrollbar */
+    display: block;
+    /* This kills the old 'display: none' bug! */
+}
+
+.roster-name-scroll::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.roster-name-scroll::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+}
+
+.roster-name-scroll::-webkit-scrollbar-thumb:hover {
+    background: var(--accent, #6f5cc2);
+    /* Cool purple hover effect */
 }
 
 .teacher-tag {
@@ -570,7 +601,8 @@
 }
 
 .drive-file-attachment:hover {
-    background: rgba(66, 133, 244, 0.1); /* Google Blue tint */
+    background: rgba(66, 133, 244, 0.1);
+    /* Google Blue tint */
     border-color: #4285F4;
     transform: translateY(-2px);
 }
@@ -597,6 +629,7 @@
     font-size: 13px;
     margin-top: 10px;
 }
+
 /* --- CLASS SETTINGS MODAL --- */
 .settings-section {
     margin-top: 20px;

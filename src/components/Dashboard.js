@@ -27,6 +27,9 @@ function Dashboard({ onLogout }) {
     const [isEditingProfile, setIsEditingProfile] = useState(false);
     const [editForm, setEditForm] = useState({});
 
+    // ✅ NEW: Mobile Sidebar State
+    const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
+
     // --- CLASS MODAL STATES ---
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [newClassName, setNewClassName] = useState('');
@@ -111,10 +114,22 @@ function Dashboard({ onLogout }) {
 
     return (
         <div className="dashboard-container">
-            {/* --- SIDEBAR --- */}
-            <aside className="sidebar">
+            {/* ✅ UPDATED SIDEBAR: Dynamic Class & Click Handler */}
+            <aside
+                className={`sidebar ${isSidebarExpanded ? 'expanded' : ''}`}
+                onClick={() => setIsSidebarExpanded(!isSidebarExpanded)}
+            >
                 <div className="brand-logo">Gama</div>
-                <div className="user-profile-mini clickable" onClick={handleOpenProfile} title="View Profile">
+
+                <div
+                    className="user-profile-mini clickable"
+                    title="View Profile"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        handleOpenProfile();
+                        setIsSidebarExpanded(false);
+                    }}
+                >
                     <div className="avatar">{fullName.charAt(0).toUpperCase()}</div>
                     <div className="user-info">
                         <h3>{fullName}</h3>
@@ -123,13 +138,32 @@ function Dashboard({ onLogout }) {
                 </div>
 
                 <nav className="nav-menu">
-                    <button className={`nav-item ${activeTab === 'overview' ? 'active' : ''}`} onClick={() => setActiveTab('overview')}><IconDashboard /> Overview</button>
-                    <button className={`nav-item ${activeTab === 'classes' ? 'active' : ''}`} onClick={() => setActiveTab('classes')}><IconClass /> Classes</button>
-                    <button className={`nav-item ${activeTab === 'notices' ? 'active' : ''}`} onClick={() => setActiveTab('notices')}><IconNotice /> Notices</button>
+                    <button
+                        className={`nav-item ${activeTab === 'overview' ? 'active' : ''}`}
+                        onClick={(e) => { e.stopPropagation(); setActiveTab('overview'); setIsSidebarExpanded(false); }}
+                    >
+                        <IconDashboard /> <span className="menu-text">Overview</span>
+                    </button>
+
+                    <button
+                        className={`nav-item ${activeTab === 'classes' ? 'active' : ''}`}
+                        onClick={(e) => { e.stopPropagation(); setActiveTab('classes'); setIsSidebarExpanded(false); }}
+                    >
+                        <IconClass /> <span className="menu-text">Classes</span>
+                    </button>
+
+                    <button
+                        className={`nav-item ${activeTab === 'notices' ? 'active' : ''}`}
+                        onClick={(e) => { e.stopPropagation(); setActiveTab('notices'); setIsSidebarExpanded(false); }}
+                    >
+                        <IconNotice /> <span className="menu-text">Notices</span>
+                    </button>
                 </nav>
 
                 <div className="sidebar-footer">
-                    <button className="logout-btn" onClick={onLogout}><IconLogout /> Sign Out</button>
+                    <button className="logout-btn" onClick={(e) => { e.stopPropagation(); onLogout(); }}>
+                        <IconLogout /> <span className="menu-text">Sign Out</span>
+                    </button>
                 </div>
             </aside>
 
@@ -141,8 +175,12 @@ function Dashboard({ onLogout }) {
                         <p className="date-display">{new Date().toDateString()}</p>
                     </div>
                     <div className="header-actions">
-                        <button className="cancel-btn" onClick={() => setShowCreateModal(true)} style={{ marginRight: '10px' }}><IconPlus /> Create Class</button>
-                        <button className="join-class-btn" onClick={() => setShowJoinModal(true)}><IconPlus /> Join Class</button>
+                        <button className="cancel-btn create-btn" onClick={() => setShowCreateModal(true)} style={{ marginRight: '10px' }}>
+                            <IconPlus /> <span>Create Class</span>
+                        </button>
+                        <button className="join-class-btn" onClick={() => setShowJoinModal(true)}>
+                            <IconPlus /> <span>Join Class</span>
+                        </button>
                     </div>
                 </header>
 
