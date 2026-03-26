@@ -104,12 +104,19 @@ function ClassDashboard() {
     }, [timeLeft, sessionCode]);
 
     useEffect(() => {
-        // ✅ FORCE WebSockets to bypass Render/Vercel polling restrictions
         const socketUrl = process.env.REACT_APP_API_URL ? process.env.REACT_APP_API_URL.replace('/api', '') : "http://localhost:5000";
+        const token = localStorage.getItem('token'); // 🚨 Get the login token
+
         const socket = io(socketUrl, {
-            transports: ['websocket'], // <--- THIS IS THE FIX
-            upgrade: false
+            transports: ['websocket'],
+            upgrade: false,
+            auth: {
+                token: token // 🚨 Pass it to the backend so verifySocket lets you in!
+            }
         });
+
+        socket.on("connect", () => console.log("🟢 SOCKET CONNECTED!"));
+        socket.on("connect_error", (err) => console.error("🔴 SOCKET REJECTED:", err.message));
 
         socket.emit("join_class_room", id);
 

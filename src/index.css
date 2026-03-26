@@ -6,9 +6,14 @@
 html,
 body {
   overflow-x: hidden;
-  /* Prevents horizontal scrolling */
+  background-color: #0f0f13 !important;
+
+  /* 2. Stop the iOS/Android elastic pull-to-refresh bounce */
+  overscroll-behavior-y: none;
+
   margin: 0;
   padding: 0;
+  height: 100%;
 }
 
 body {
