@@ -106,25 +106,34 @@ function ClassDashboard() {
 
     useEffect(() => {
         const socketUrl = process.env.REACT_APP_API_URL ? process.env.REACT_APP_API_URL.replace('/api', '') : "http://localhost:5000";
-        const token = localStorage.getItem('token'); // 🚨 Get the login token
+        const token = localStorage.getItem('token');
 
+        // ✅ FIX 1: Let Render negotiate via polling first, then upgrade
         const socket = io(socketUrl, {
-            transports: ['websocket'],
-            upgrade: false,
-            auth: {
-                token: token // 🚨 Pass it to the backend so verifySocket lets you in!
-            }
+            transports: ['polling', 'websocket'],
+            auth: { token: token },
+            extraHeaders: { Authorization: `Bearer ${token}` }
         });
+
+        socket.on("connect", () => {
+            console.log("🟢 SOCKET CONNECTED TO SERVER!");
+            // ✅ FIX 3: Emit 'join_class_room' ONLY after connection is established
+            socket.emit("join_class_room", id);
+        });
+
+        socket.on("connect_error", (err) => console.error("🔴 SOCKET REJECTED:", err.message));
 
         setLiveSocket(socket);
 
-        socket.on("connect", () => console.log("🟢 SOCKET CONNECTED!"));
-        socket.on("connect_error", (err) => console.error("🔴 SOCKET REJECTED:", err.message));
+        socket.on("receive_message", () => {
+            console.log("🔄 Chat updated live!");
+            fetchClassData();
+        });
 
-        socket.emit("join_class_room", id);
-
-        socket.on("receive_message", () => fetchClassData());
-        socket.on("update_attendance_count", () => fetchClassData());
+        socket.on("update_attendance_count", () => {
+            console.log("🔄 Attendance updated live!");
+            fetchClassData();
+        });
 
         return () => socket.disconnect();
     }, [id, fetchClassData]);
@@ -292,9 +301,6 @@ function ClassDashboard() {
                         <button className="setting_btn" onClick={() => { setShowSettings(true); setNewName(classData.class_name); }}>⚙️</button>
                     )}
                 </div>
-                {isTeacher && (
-                    <button className="setting_btn" onClick={() => { setShowSettings(true); setNewName(classData.class_name); }}>⚙️</button>
-                )}
             </header>
 
             <div className="vertical-layout">
