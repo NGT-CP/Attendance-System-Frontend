@@ -59,6 +59,12 @@ function ClassDashboard() {
                 const teacherCheck = data.classroom.owner_id === authRes.data.user.id;
                 setIsTeacher(teacherCheck);
                 setNotices(data.notices);
+                setActiveNotice(prevActive => {
+                    if (!prevActive) return null; // If no chat is open, do nothing
+                    // Find the open notice in the fresh data we just downloaded
+                    const freshNotice = data.notices.find(n => n.id === prevActive.id);
+                    return freshNotice || prevActive;
+                });
                 setRoster(data.roster);
 
                 const attMap = {};
