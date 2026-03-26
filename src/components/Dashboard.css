@@ -585,11 +585,21 @@
     /* Expand the sidebar on tap */
     .sidebar.expanded {
         width: 220px;
-        /* Expands to show text */
         position: absolute;
-        /* Floats over the content so it doesn't crush the graph too much */
-        height: 100vh;
+
+        /* 1. THE FIX: Use 'dvh' instead of 'vh' so it accounts for the mobile address bar */
+        height: 100dvh;
+
+        /* 2. Fallback for older iPhones */
+        min-height: -webkit-fill-available;
+
         box-shadow: 5px 0 25px rgba(0, 0, 0, 0.8);
+
+        /* 3. Let the user scroll the menu if their phone is horizontal or very small */
+        overflow-y: auto;
+
+        /* 4. Push the bottom up a little bit so the button doesn't hug the screen edge */
+        padding-bottom: 25px;
     }
 
     /* Show text elements smoothly when expanded */
