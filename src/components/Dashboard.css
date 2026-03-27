@@ -565,9 +565,29 @@
    📱 MOBILE & TABLET RESPONSIVENESS (The Magic Squish Logic)
    ========================================================= */
 @media screen and (max-width: 768px) {
+    .dashboard-container {
+        position: relative;
+        overflow: hidden;
+    }
+
+    .sidebar {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100dvh;
+        width: 70px;
+        /* Default closed size (just enough for icons) */
+        padding: 20px 8px;
+        cursor: pointer;
+        z-index: 50;
+    }
 
     .main-content {
         padding: 20px 10px;
+        width: 100%;
+        margin-left: 0;
+        padding-left: 88px;
+        padding-bottom: 120px !important;
         overflow-x: hidden;
     }
 
@@ -578,14 +598,6 @@
     }
 
     /* --- SIDEBAR LOGIC --- */
-    .sidebar {
-        width: 70px;
-        /* Default closed size (just enough for icons) */
-        padding: 20px 8px;
-        cursor: pointer;
-        z-index: 50;
-    }
-
     /* Hide text elements smoothly when collapsed */
     .sidebar:not(.expanded) .menu-text,
     .sidebar:not(.expanded) .user-info,
@@ -613,6 +625,10 @@
 
         /* 4. Push the bottom up a little bit so the button doesn't hug the screen edge */
         padding-bottom: 25px;
+    }
+
+    .sidebar.expanded+.main-content {
+        padding-left: 10px;
     }
 
     /* Show text elements smoothly when expanded */
@@ -702,12 +718,6 @@
         /* Or whatever your outermost wrapper is named */
         height: 100dvh !important;
         padding-bottom: env(safe-area-inset-bottom, 20px) !important;
-    }
-
-    /* 2. THE CUSHION: Give the main scrollable area a massive bottom padding. 
-          This lets you scroll the very last class card high up onto the screen. */
-    .main-content {
-        padding-bottom: 120px !important;
     }
 }
 

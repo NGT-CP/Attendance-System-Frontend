@@ -44,6 +44,15 @@ function ClassDashboard() {
 
     const [viewDate, setViewDate] = useState(new Date());
 
+    const sortNoticeChats = useCallback((noticeList = []) => {
+        return noticeList.map((notice) => ({
+            ...notice,
+            ChatMessages: [...(notice.ChatMessages || [])].sort(
+                (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
+            )
+        }));
+    }, []);
+
     const fetchClassData = useCallback(async () => {
         setIsLoading(true);
         try {
@@ -55,14 +64,15 @@ function ClassDashboard() {
             const data = res.data;
 
             if (data.success) {
+                const normalizedNotices = sortNoticeChats(data.notices || []);
                 setClassData(data.classroom);
                 const teacherCheck = data.classroom.owner_id === authRes.data.user.id;
                 setIsTeacher(teacherCheck);
-                setNotices(data.notices);
+                setNotices(normalizedNotices);
                 setActiveNotice(prevActive => {
                     if (!prevActive) return null; // If no chat is open, do nothing
                     // Find the open notice in the fresh data we just downloaded
-                    const freshNotice = data.notices.find(n => n.id === prevActive.id);
+                    const freshNotice = normalizedNotices.find(n => n.id === prevActive.id);
                     return freshNotice || prevActive;
                 });
                 setRoster(data.roster);
@@ -99,7 +109,7 @@ function ClassDashboard() {
         } finally {
             setIsLoading(false);
         }
-    }, [id, navigate]);
+    }, [id, navigate, sortNoticeChats]);
 
     // Initial Load
     useEffect(() => { fetchClassData(); }, [fetchClassData]);
@@ -258,7 +268,12 @@ function ClassDashboard() {
         try {
             const res = await API.post(`/classes/notices/${activeNotice.id}/chat`, { message: comment });
             if (res.data.success) {
-                const updatedNotice = { ...activeNotice, ChatMessages: [...activeNotice.ChatMessages, res.data.chat] };
+                const updatedNotice = {
+                    ...activeNotice,
+                    ChatMessages: [...(activeNotice.ChatMessages || []), res.data.chat].sort(
+                        (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
+                    )
+                };
                 setActiveNotice(updatedNotice);
                 setNotices(notices.map(n => n.id === activeNotice.id ? updatedNotice : n));
                 setComment('');
@@ -419,7 +434,11 @@ function ClassDashboard() {
                                                 {activeNotice.ChatMessages?.length === 0 && <p style={{ color: 'var(--text-muted)', fontSize: '12px' }}>No replies yet.</p>}
                                                 {activeNotice.ChatMessages?.map(msg => (
                                                     <div key={msg.id} className={`chat-bubble ${msg.Sender?.id === currentUser?.id ? 'sent' : 'received'}`}>
-                                                        <strong>{msg.Sender?.firstName}:</strong> {msg.message}
+                                                        <strong>{msg.Sender?.firstName}:</strong>
+                                                        <p className="chat-message-text">{msg.message}</p>
+                                                        <span className="chat-time">
+                                                            {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                        </span>
                                                     </div>
                                                 ))}
                                             </div>

@@ -380,6 +380,19 @@
     letter-spacing: 0.5px;
 }
 
+.chat-message-text {
+    margin: 0;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.chat-time {
+    display: block;
+    margin-top: 6px;
+    font-size: 11px;
+    opacity: 0.8;
+}
+
 .received {
     background: rgba(255, 255, 255, 0.05);
     align-self: flex-start;
