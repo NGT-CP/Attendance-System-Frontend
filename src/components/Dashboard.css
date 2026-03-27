@@ -570,6 +570,13 @@
         overflow: hidden;
     }
 
+    /* Profile modal: allow internal scrolling on small screens */
+    .modal-content.profile-modal {
+        max-height: calc(100dvh - 40px);
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
     .sidebar {
         position: absolute;
         top: 0;
