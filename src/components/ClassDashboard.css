@@ -296,6 +296,7 @@
     padding: 15px;
     border-radius: 12px;
     transition: all 0.2s ease;
+    position: relative;
 }
 
 .notice-card:hover {
@@ -319,6 +320,94 @@
 .notice-date {
     font-size: 12px;
     color: var(--text-muted, #a0a0a0);
+}
+
+.notice-header-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.notice-options {
+    position: relative;
+}
+
+.notice-options-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text-main, #e0e0e0);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.notice-options-btn:hover {
+    transform: translateY(-1px);
+    border-color: rgba(111, 92, 194, 0.5);
+    background: rgba(111, 92, 194, 0.06);
+}
+
+.notice-options-menu {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 8px);
+    width: 180px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px;
+    border-radius: 12px;
+    background: rgba(10, 10, 12, 0.92);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 14px 40px rgba(0, 0, 0, 0.6);
+    z-index: 50;
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+    pointer-events: none;
+    transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.notice-options-menu.open {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+}
+
+.notice-options-item {
+    width: 100%;
+    text-align: left;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--text-main, #e0e0e0);
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    font-size: 13px;
+}
+
+.notice-options-item:hover:not(:disabled) {
+    background: rgba(111, 92, 194, 0.1);
+    border-color: rgba(111, 92, 194, 0.45);
+    transform: translateY(-1px);
+}
+
+.notice-options-item:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.notice-options-item-danger {
+    border-color: rgba(255, 77, 77, 0.25);
+}
+
+.notice-options-item-danger:hover:not(:disabled) {
+    background: rgba(255, 77, 77, 0.12);
+    border-color: rgba(255, 77, 77, 0.45);
 }
 
 .notice-preview {
@@ -391,6 +480,108 @@
     margin-top: 6px;
     font-size: 11px;
     opacity: 0.8;
+}
+
+.chat-bubble-actions {
+    margin-top: 8px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    align-items: center;
+}
+
+.chat-bubble-actions.disabled {
+    opacity: 0.6;
+}
+
+.chat-action-btn {
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-main, #e0e0e0);
+    border-radius: 10px;
+    padding: 6px 10px;
+    cursor: pointer;
+    font-weight: 700;
+    transition: all 0.2s ease;
+}
+
+.chat-action-btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    border-color: rgba(111, 92, 194, 0.6);
+    background: rgba(111, 92, 194, 0.12);
+}
+
+.chat-action-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.chat-action-btn-secondary {
+    background: rgba(255, 255, 255, 0.03);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+.chat-action-btn-icon {
+    width: 34px;
+    height: 30px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.chat-action-btn-danger {
+    border-color: rgba(255, 77, 77, 0.35);
+}
+
+.chat-action-btn-danger:hover:not(:disabled) {
+    background: rgba(255, 77, 77, 0.12);
+    border-color: rgba(255, 77, 77, 0.55);
+}
+
+.chat-action-expired {
+    font-size: 11px;
+    opacity: 0.75;
+    color: var(--text-muted, #a0a0a0);
+}
+
+.chat-edit-area {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    animation: chatEditIn 0.2s ease-out;
+}
+
+@keyframes chatEditIn {
+    from {
+        opacity: 0;
+        transform: translateY(4px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.chat-edit-input {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: white;
+    padding: 10px 12px;
+    border-radius: 10px;
+    outline: none;
+}
+
+.chat-edit-input:focus {
+    border-color: rgba(111, 92, 194, 0.65);
+    box-shadow: 0 0 0 2px rgba(111, 92, 194, 0.15);
+}
+
+.chat-edit-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
 }
 
 .received {

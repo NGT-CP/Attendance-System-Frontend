@@ -25,9 +25,17 @@ function ClassDashboard() {
     const [activeNotice, setActiveNotice] = useState(null);
     const [comment, setComment] = useState('');
 
-    // ✅ FIX: Replaced liveSocket state with a stable ref and a refresh trigger
     const socketRef = useRef(null);
+    const chatMessagesRef = useRef(null);
     const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+    const [openTeacherNoticeMenuId, setOpenTeacherNoticeMenuId] = useState(null);
+    const [showEditNoticeModal, setShowEditNoticeModal] = useState(false);
+    const [editNoticeForm, setEditNoticeForm] = useState({ id: null, title: '', content: '', link: '', allowsChat: true });
+    const [noticeModalBusy, setNoticeModalBusy] = useState(false);
+
+    const [editingChatId, setEditingChatId] = useState(null);
+    const [editingChatText, setEditingChatText] = useState('');
 
     const [showNoticeModal, setShowNoticeModal] = useState(false);
     const [attendanceDict, setAttendanceDict] = useState({});
@@ -44,6 +52,25 @@ function ClassDashboard() {
 
     const [viewDate, setViewDate] = useState(new Date());
 
+    // --- CUSTOM MODAL STATE ---
+    const [dialog, setDialog] = useState({ isOpen: false, type: 'alert', title: '', message: '', onConfirm: null });
+
+    const showAlert = (title, message) => {
+        setDialog({ isOpen: true, type: 'alert', title, message, onConfirm: closeDialog });
+    };
+
+    const showConfirm = (title, message, onConfirmCallback) => {
+        setDialog({
+            isOpen: true, type: 'confirm', title, message, onConfirm: () => {
+                closeDialog();
+                if (onConfirmCallback) onConfirmCallback();
+            }
+        });
+    };
+
+    const closeDialog = () => setDialog(prev => ({ ...prev, isOpen: false }));
+    // --------------------------
+
     const sortNoticeChats = useCallback((noticeList = []) => {
         return noticeList.map((notice) => ({
             ...notice,
@@ -51,6 +78,19 @@ function ClassDashboard() {
                 (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
             )
         }));
+    }, []);
+
+    const isWithin15Minutes = (createdAt) => {
+        if (!createdAt) return false;
+        const t = new Date(createdAt).getTime();
+        if (Number.isNaN(t)) return false;
+        return (Date.now() - t) <= (15 * 60 * 1000);
+    };
+
+    const scrollChatToBottom = useCallback(() => {
+        const el = chatMessagesRef.current;
+        if (!el) return;
+        el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
     }, []);
 
     const fetchClassData = useCallback(async () => {
@@ -70,8 +110,7 @@ function ClassDashboard() {
                 setIsTeacher(teacherCheck);
                 setNotices(normalizedNotices);
                 setActiveNotice(prevActive => {
-                    if (!prevActive) return null; // If no chat is open, do nothing
-                    // Find the open notice in the fresh data we just downloaded
+                    if (!prevActive) return null;
                     const freshNotice = normalizedNotices.find(n => n.id === prevActive.id);
                     return freshNotice || prevActive;
                 });
@@ -104,24 +143,42 @@ function ClassDashboard() {
             }
         } catch (error) {
             console.error("Dashboard Fetch Error:", error);
-            alert("Failed to load dashboard data.");
+            showAlert("Error", "Failed to load dashboard data.");
             navigate('/dashboard');
         } finally {
             setIsLoading(false);
         }
     }, [id, navigate, sortNoticeChats]);
 
-    // Initial Load
     useEffect(() => { fetchClassData(); }, [fetchClassData]);
 
-    // ✅ FIX: Triggers a silent UI refresh when the socket increments the counter
     useEffect(() => {
         if (refreshTrigger > 0) {
             fetchClassData();
         }
     }, [refreshTrigger, fetchClassData]);
 
-    // Timer Logic
+    useEffect(() => {
+        if (!openTeacherNoticeMenuId) return;
+
+        const menuId = `teacher-notice-menu-${openTeacherNoticeMenuId}`;
+        const btnId = `teacher-notice-menu-btn-${openTeacherNoticeMenuId}`;
+
+        const handler = (e) => {
+            const menuEl = document.getElementById(menuId);
+            const btnEl = document.getElementById(btnId);
+
+            const target = e.target;
+            if (menuEl && (menuEl === target || menuEl.contains(target))) return;
+            if (btnEl && (btnEl === target || btnEl.contains(target))) return;
+
+            setOpenTeacherNoticeMenuId(null);
+        };
+
+        window.addEventListener('mousedown', handler);
+        return () => window.removeEventListener('mousedown', handler);
+    }, [openTeacherNoticeMenuId]);
+
     useEffect(() => {
         if (timeLeft > 0) {
             const timerId = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
@@ -132,7 +189,6 @@ function ClassDashboard() {
         }
     }, [timeLeft, sessionCode]);
 
-    // ✅ FIX: The Bulletproof Socket Connection
     useEffect(() => {
         const socketUrl = process.env.REACT_APP_API_URL ? process.env.REACT_APP_API_URL.replace('/api', '') : "http://localhost:5000";
         const token = localStorage.getItem('token');
@@ -146,28 +202,34 @@ function ClassDashboard() {
             reconnectionDelay: 2000
         });
 
-        // Store active connection safely so buttons can always reach it
         socketRef.current = socket;
 
         socket.on("connect", () => {
-            console.log("🟢 SOCKET CONNECTED TO SERVER!");
             socket.emit("join_class_room", id);
         });
 
-        socket.on("connect_error", (err) => console.error("🔴 SOCKET REJECTED:", err.message));
-
         socket.on("receive_message", () => {
-            console.log("🔄 Chat update signal received!");
-            setRefreshTrigger(prev => prev + 1); // Increments to trigger UI update
+            setRefreshTrigger(prev => prev + 1);
         });
 
         socket.on("update_attendance_count", () => {
-            console.log("🔄 Attendance update signal received!");
-            setRefreshTrigger(prev => prev + 1); // Increments to trigger UI update
+            setRefreshTrigger(prev => prev + 1);
         });
 
         return () => socket.disconnect();
-    }, [id]); // 🚨 fetchClassData is GONE from here, ending the reconnect loop forever
+    }, [id]);
+
+    useEffect(() => {
+        if (!activeNotice?.id) return;
+        const timeoutId = setTimeout(() => {
+            scrollChatToBottom();
+        }, 0);
+        return () => clearTimeout(timeoutId);
+    }, [
+        activeNotice?.id,
+        activeNotice?.ChatMessages?.length,
+        scrollChatToBottom
+    ]);
 
     const handlePrevMonth = () => setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1));
     const handleNextMonth = () => setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1));
@@ -186,15 +248,16 @@ function ClassDashboard() {
         return 'upcoming';
     };
 
-    const handleMarkLeave = async () => {
-        if (!window.confirm("Mark today as a cancelled class/leave? This will appear orange for all students.")) return;
-        try {
-            const res = await markClassCancelled(id);
-            if (res.data.success) {
-                fetchClassData();
-                socketRef.current?.emit('attendance_marked', id); // Inform students
-            }
-        } catch (err) { alert("Failed to mark leave"); }
+    const handleMarkLeave = () => {
+        showConfirm("Cancel Class", "Mark today as a cancelled class/leave? This will appear orange for all students.", async () => {
+            try {
+                const res = await markClassCancelled(id);
+                if (res.data.success) {
+                    fetchClassData();
+                    socketRef.current?.emit('attendance_marked', id);
+                }
+            } catch (err) { showAlert("Error", "Failed to mark leave"); }
+        });
     };
 
     const handleStartAttendance = async () => {
@@ -207,32 +270,36 @@ function ClassDashboard() {
                     setTimeLeft(120);
                     setGeoMessage('');
                     fetchClassData();
+                    socketRef.current?.emit('attendance_marked', id);
                 }
-            } catch (err) { }
+        } catch (err) { 
+            showAlert("Error", err.response?.data?.message || "Failed to start attendance session.");
+        }
             setIsLoading(false);
         };
 
         if (useGps) {
             navigator.geolocation.getCurrentPosition(
                 pos => startSession(pos.coords.latitude, pos.coords.longitude),
-                () => { alert("Location required!"); setIsLoading(false); }, { enableHighAccuracy: true }
+                () => { showAlert("Location Error", "Location is required to generate GPS attendance."); setIsLoading(false); },
+                { enableHighAccuracy: true }
             );
         } else { startSession(); }
     };
 
     const handleMarkAttendance = async () => {
-        if (!inputCode) return alert("Enter code");
+        const codeToSubmit = inputCode.trim();
+        if (!codeToSubmit) return showAlert("Notice", "Please enter the attendance code.");
         setGeoMessage("Verifying Hardware & Location...");
         setIsLoading(true);
 
         const markSession = async (lat = null, lng = null) => {
             try {
-                const res = await markStudentAttendance(id, inputCode, lat, lng);
+                const res = await markStudentAttendance(id, codeToSubmit, lat, lng);
                 setGeoMessage(res.data.message);
                 if (res.data.success) {
                     fetchClassData();
-                    console.log("🚀 Firing Socket Event to Server!");
-                    socketRef.current?.emit('attendance_marked', id); // ✅ Uses ref
+                    socketRef.current?.emit('attendance_marked', id);
                 }
             } catch (err) {
                 setGeoMessage(err.response?.data?.message || "Server error.");
@@ -248,7 +315,6 @@ function ClassDashboard() {
                         setIsLoading(false);
                         return;
                     }
-                    console.log(`Student Location Accuracy: ${pos.coords.accuracy} meters`);
                     markSession(pos.coords.latitude, pos.coords.longitude);
                 },
                 () => markSession(),
@@ -277,44 +343,147 @@ function ClassDashboard() {
                 setActiveNotice(updatedNotice);
                 setNotices(notices.map(n => n.id === activeNotice.id ? updatedNotice : n));
                 setComment('');
-
-                console.log("🚀 Firing Chat Socket Event!");
-                socketRef.current?.emit('send_message', { classId: id }); // ✅ Uses ref
+                socketRef.current?.emit('send_message', { classId: id });
             }
         } catch (error) {
-            console.error("Chat Error:", error);
-            alert(error.response?.data?.message || "Failed to send message");
+            showAlert("Error", error.response?.data?.message || "Failed to send message");
         }
     };
 
+    const handleTeacherToggleNoticeChat = async (notice) => {
+        try {
+            setNoticeModalBusy(true);
+            setOpenTeacherNoticeMenuId(null);
+
+            const newAllows = !notice.allows_chat;
+            await API.put(`/classes/notices/${notice.id}/chat-enabled`, { allows_chat: newAllows });
+            socketRef.current?.emit('send_message', { classId: id });
+            await fetchClassData();
+        } catch (err) {
+            showAlert("Error", err.response?.data?.message || "Failed to update notice chat settings.");
+        } finally {
+            setNoticeModalBusy(false);
+        }
+    };
+
+    const handleTeacherOpenEditNotice = (notice) => {
+        setOpenTeacherNoticeMenuId(null);
+        setEditNoticeForm({
+            id: notice.id,
+            title: notice.title || '',
+            content: notice.content || '',
+            link: notice.attachment_url || '',
+            allowsChat: typeof notice.allows_chat === 'boolean' ? notice.allows_chat : true
+        });
+        setShowEditNoticeModal(true);
+    };
+
+    const handleTeacherSaveEditNotice = async () => {
+        if (!editNoticeForm.title.trim() || !editNoticeForm.content.trim()) {
+            return showAlert("Notice", "Title and content are required.");
+        }
+
+        try {
+            setNoticeModalBusy(true);
+            await API.put(`/classes/notices/${editNoticeForm.id}`, {
+                title: editNoticeForm.title,
+                content: editNoticeForm.content,
+                file_url: editNoticeForm.link,
+                allows_chat: editNoticeForm.allowsChat
+            });
+            socketRef.current?.emit('send_message', { classId: id });
+            setShowEditNoticeModal(false);
+            await fetchClassData();
+        } catch (err) {
+            showAlert("Error", err.response?.data?.message || "Failed to update notice.");
+        } finally {
+            setNoticeModalBusy(false);
+        }
+    };
+
+    const handleTeacherDeleteNotice = (noticeId) => {
+        setOpenTeacherNoticeMenuId(null);
+        showConfirm("Delete Notice", "Are you sure you want to permanently remove this notice?", async () => {
+            try {
+                setNoticeModalBusy(true);
+                await API.delete(`/classes/notices/${noticeId}`);
+                setActiveNotice(prev => (prev?.id === noticeId ? null : prev));
+                socketRef.current?.emit('send_message', { classId: id });
+                await fetchClassData();
+            } catch (err) {
+                showAlert("Error", err.response?.data?.message || "Failed to delete notice.");
+            } finally {
+                setNoticeModalBusy(false);
+            }
+        });
+    };
+
+    const handleStudentStartEditChat = (msg) => {
+        setEditingChatId(msg.id);
+        setEditingChatText(msg.message || '');
+    };
+
+    const handleStudentCancelEditChat = () => {
+        setEditingChatId(null);
+        setEditingChatText('');
+    };
+
+    const handleStudentSaveEditChat = async () => {
+        if (!editingChatText.trim()) return;
+        try {
+            const chatId = editingChatId;
+            await API.put(`/classes/notices/chat/${chatId}`, { message: editingChatText });
+            setEditingChatId(null);
+            setEditingChatText('');
+            socketRef.current?.emit('send_message', { classId: id });
+            await fetchClassData();
+        } catch (err) {
+            showAlert("Error", err.response?.data?.message || "Failed to edit chat message.");
+        }
+    };
+
+    const handleStudentDeleteChat = (chatId) => {
+        showConfirm("Delete Reply", "Are you sure you want to delete this reply?", async () => {
+            try {
+                await API.delete(`/classes/notices/chat/${chatId}`);
+                socketRef.current?.emit('send_message', { classId: id });
+                await fetchClassData();
+            } catch (err) {
+                showAlert("Error", err.response?.data?.message || "Failed to delete chat message.");
+            }
+        });
+    };
+
     const handleUpdateName = async () => {
-        if (!NewName.trim()) return alert("Name cannot be empty");
+        if (!NewName.trim()) return showAlert("Notice", "Name cannot be empty");
         try {
             const res = await updateClassName(id, NewName);
             if (res.data.success) {
                 setClassData({ ...classData, class_name: NewName });
                 setShowSettings(false);
             }
-        } catch (err) { alert("Failed to update name"); }
+        } catch (err) { showAlert("Error", "Failed to update name"); }
     };
 
-    const handleRegenerateCode = async () => {
-        if (!window.confirm("Are you sure? Old codes will stop working.")) return;
-        try {
-            const res = await regenerateClassCode(id);
-            if (res.data.success) {
-                setClassData({ ...classData, join_code: res.data.new_code });
-                alert(`Success! New code is: ${res.data.new_code}`);
-            }
-        } catch (err) { alert("Failed to regenerate code"); }
+    const handleRegenerateCode = () => {
+        showConfirm("Regenerate Code", "Are you sure? Old codes will immediately stop working.", async () => {
+            try {
+                const res = await regenerateClassCode(id);
+                if (res.data.success) {
+                    setClassData({ ...classData, join_code: res.data.new_code });
+                    showAlert("Success", `New class code is: ${res.data.new_code}`);
+                }
+            } catch (err) { showAlert("Error", "Failed to regenerate code"); }
+        });
     };
 
-    const handleDeleteClass = async () => {
-        if (!window.confirm("WARNING: This will permanently delete the class. Continue?")) return;
-        try {
-            const res = await deleteClass(id);
-            if (res.data.success) navigate('/dashboard');
-        } catch (err) { alert("Failed to delete class"); }
+    const handleDeleteClass = () => {
+        showConfirm("Delete Class", "WARNING: This will permanently delete the class and all its data. Continue?", async () => {
+            try {
+                const res = await deleteClass(id);
+                if (res.data.success) navigate('/dashboard');
+            } catch (err) { showAlert("Error", "Failed to delete class"); }
+        });
     };
 
     if (isLoading && !classData) return <div className="class-dashboard-container"><div className="loading-state">Loading Classroom...</div></div>;
@@ -408,9 +577,59 @@ function ClassDashboard() {
                                 <div key={notice.id} className="notice-card" style={{ marginBottom: '15px' }}>
                                     <div className="notice-header">
                                         <h4>{notice.title}</h4>
-                                        <span className="notice-date">
-                                            {new Date(notice.createdAt).toLocaleString([], { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                                        </span>
+                                        <div className="notice-header-right">
+                                            <span className="notice-date">
+                                                {new Date(notice.createdAt).toLocaleString([], { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                            </span>
+
+                                            {isTeacher && (
+                                                <div className="notice-options">
+                                                    <button
+                                                        id={`teacher-notice-menu-btn-${notice.id}`}
+                                                        className="notice-options-btn"
+                                                        aria-label="Notice options"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setOpenTeacherNoticeMenuId(prev => (prev === notice.id ? null : notice.id));
+                                                        }}
+                                                    >
+                                                        ⋮
+                                                    </button>
+
+                                                    {openTeacherNoticeMenuId === notice.id && (
+                                                        <div
+                                                            id={`teacher-notice-menu-${notice.id}`}
+                                                            className="notice-options-menu open"
+                                                            onClick={(e) => e.stopPropagation()}
+                                                        >
+                                                            <button
+                                                                className="notice-options-item"
+                                                                onClick={() => handleTeacherToggleNoticeChat(notice)}
+                                                                disabled={noticeModalBusy}
+                                                            >
+                                                                {notice.allows_chat ? 'Disable replies' : 'Enable replies'}
+                                                            </button>
+
+                                                            <button
+                                                                className="notice-options-item"
+                                                                onClick={() => handleTeacherOpenEditNotice(notice)}
+                                                                disabled={noticeModalBusy}
+                                                            >
+                                                                Edit notice
+                                                            </button>
+
+                                                            <button
+                                                                className="notice-options-item notice-options-item-danger"
+                                                                onClick={() => handleTeacherDeleteNotice(notice.id)}
+                                                                disabled={noticeModalBusy}
+                                                            >
+                                                                Remove notice
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                     <p className="notice-preview">{notice.content}</p>
 
@@ -430,17 +649,76 @@ function ClassDashboard() {
 
                                     {activeNotice?.id === notice.id && (
                                         <div className="inline-chat-section">
-                                            <div className="chat-messages" style={{ maxHeight: '250px', overflowY: 'auto', marginBottom: '10px' }}>
+                                            <div
+                                                ref={chatMessagesRef}
+                                                className="chat-messages"
+                                                style={{ maxHeight: '250px', overflowY: 'auto', marginBottom: '10px' }}
+                                            >
                                                 {activeNotice.ChatMessages?.length === 0 && <p style={{ color: 'var(--text-muted)', fontSize: '12px' }}>No replies yet.</p>}
-                                                {activeNotice.ChatMessages?.map(msg => (
-                                                    <div key={msg.id} className={`chat-bubble ${msg.Sender?.id === currentUser?.id ? 'sent' : 'received'}`}>
-                                                        <strong>{msg.Sender?.firstName}:</strong>
-                                                        <p className="chat-message-text">{msg.message}</p>
-                                                        <span className="chat-time">
-                                                            {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                        </span>
-                                                    </div>
-                                                ))}
+                                                {activeNotice.ChatMessages?.map((msg) => {
+                                                    const isMine = msg.sender_id === currentUser?.id;
+                                                    const canEdit = isMine && isWithin15Minutes(msg.createdAt);
+                                                    const isEditing = editingChatId === msg.id;
+
+                                                    return (
+                                                        <div
+                                                            key={msg.id}
+                                                            className={`chat-bubble ${isMine ? 'sent' : 'received'}`}
+                                                        >
+                                                            <strong>{msg.Sender?.firstName}:</strong>
+
+                                                            {isEditing ? (
+                                                                <div className="chat-edit-area">
+                                                                    <input
+                                                                        type="text"
+                                                                        className="chat-edit-input"
+                                                                        value={editingChatText}
+                                                                        onChange={(e) => setEditingChatText(e.target.value)}
+                                                                        onKeyPress={(e) => e.key === 'Enter' && handleStudentSaveEditChat()}
+                                                                    />
+                                                                    <div className="chat-edit-actions">
+                                                                        <button className="chat-action-btn" onClick={handleStudentSaveEditChat}>
+                                                                            Save
+                                                                        </button>
+                                                                        <button className="chat-action-btn chat-action-btn-secondary" onClick={handleStudentCancelEditChat}>
+                                                                            Cancel
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                            ) : (
+                                                                <>
+                                                                    <p className="chat-message-text">{msg.message}</p>
+                                                                    <span className="chat-time">
+                                                                        {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                                    </span>
+
+                                                                    {isMine && (
+                                                                        <div className="chat-bubble-actions enabled">
+                                                                            {canEdit ? (
+                                                                                <button
+                                                                                    className="chat-action-btn chat-action-btn-icon"
+                                                                                    onClick={() => handleStudentStartEditChat(msg)}
+                                                                                    title="Edit reply"
+                                                                                >
+                                                                                    ✎
+                                                                                </button>
+                                                                            ) : (
+                                                                                <span className="chat-action-expired" style={{ marginRight: '8px' }}>Edit expired</span>
+                                                                            )}
+                                                                            <button
+                                                                                className="chat-action-btn chat-action-btn-icon chat-action-btn-danger"
+                                                                                onClick={() => handleStudentDeleteChat(msg.id)}
+                                                                                title="Delete reply"
+                                                                            >
+                                                                                🗑
+                                                                            </button>
+                                                                        </div>
+                                                                    )}
+                                                                </>
+                                                            )}
+                                                        </div>
+                                                    );
+                                                })}
                                             </div>
 
                                             {notice.allows_chat ? (
@@ -466,6 +744,24 @@ function ClassDashboard() {
                 </div>
             </div>
 
+            {/* CUSTOM DIALOG MODAL */}
+            {dialog.isOpen && (
+                <div className="modal-overlay" style={{ zIndex: 9999 }}>
+                    <div className="modal-content glass-card" style={{ maxWidth: '400px', textAlign: 'center' }}>
+                        <h3 style={{ marginTop: 0 }}>{dialog.title}</h3>
+                        <p style={{ margin: '20px 0', color: 'var(--text-muted)' }}>{dialog.message}</p>
+                        <div className="modal-actions" style={{ justifyContent: 'center', gap: '15px' }}>
+                            {dialog.type === 'confirm' && (
+                                <button className="cancel-btn" onClick={closeDialog}>Cancel</button>
+                            )}
+                            <button className="join-class-btn" onClick={dialog.onConfirm}>
+                                {dialog.type === 'confirm' ? 'Confirm' : 'OK'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {showNoticeModal && (
                 <CreateNotice
                     classId={id}
@@ -474,6 +770,64 @@ function ClassDashboard() {
                         setNotices([newNoticeData, ...notices]);
                     }}
                 />
+            )}
+
+            {showEditNoticeModal && (
+                <div className="modal-overlay">
+                    <div className="modal-content glass-card notice-edit-modal">
+                        <h2>Edit Notice</h2>
+
+                        <input
+                            type="text"
+                            placeholder="Notice Title"
+                            value={editNoticeForm.title}
+                            onChange={(e) => setEditNoticeForm({ ...editNoticeForm, title: e.target.value })}
+                            className="modal-input"
+                            style={{ marginTop: '10px' }}
+                        />
+
+                        <textarea
+                            placeholder="Type your message here..."
+                            value={editNoticeForm.content}
+                            onChange={(e) => setEditNoticeForm({ ...editNoticeForm, content: e.target.value })}
+                            className="notice-modal-textarea"
+                        />
+
+                        <input
+                            type="text"
+                            placeholder="Paste Google Drive Link (Optional)"
+                            value={editNoticeForm.link}
+                            onChange={(e) => setEditNoticeForm({ ...editNoticeForm, link: e.target.value })}
+                            className="modal-input"
+                        />
+
+                        <div className="toggle-container">
+                            <input
+                                type="checkbox"
+                                checked={editNoticeForm.allowsChat}
+                                onChange={(e) => setEditNoticeForm({ ...editNoticeForm, allowsChat: e.target.checked })}
+                            />
+                            <label>Allow students to reply / ask questions</label>
+                        </div>
+
+                        <div className="modal-actions" style={{ marginTop: '25px' }}>
+                            <button
+                                className="cancel-btn"
+                                onClick={() => setShowEditNoticeModal(false)}
+                                disabled={noticeModalBusy}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                className="join-class-btn"
+                                onClick={handleTeacherSaveEditNotice}
+                                disabled={noticeModalBusy}
+                            >
+                                {noticeModalBusy ? 'Saving...' : 'Save Changes'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
 
             {ShowSettings && (
