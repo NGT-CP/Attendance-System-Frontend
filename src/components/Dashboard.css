@@ -570,6 +570,15 @@
         overflow: hidden;
     }
 
+    /* 📱 Kills the default mobile browser tap highlight flash */
+    .sidebar,
+    .nav-item,
+    .user-profile-mini.clickable,
+    .logout-btn,
+    .sidebar-footer button {
+        -webkit-tap-highlight-color: transparent;
+    }
+
     /* Profile modal: allow internal scrolling on small screens */
     .modal-content.profile-modal {
         max-height: calc(100dvh - 40px);

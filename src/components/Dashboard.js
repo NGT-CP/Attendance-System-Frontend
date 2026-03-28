@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { fetchProfile, fetchOverviewStats, fetchMyNotices, joinClass, createClass, updateProfile } from '../services/api';
+import { fetchProfile, fetchOverviewStats, fetchMyNotices, joinClass, createClass, updateProfile, changePassword, deleteAccount } from '../services/api';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import './Dashboard.css';
 
@@ -349,6 +349,52 @@ function Dashboard({ onLogout }) {
                                 <p style={{ opacity: 0.7 }}>{profile.email}</p>
                             </div>
                         </div>
+
+                        {/* --- DANGER ZONE --- */}
+                        {isEditingProfile && (
+                            <div className="danger-zone" style={{ marginTop: '30px', paddingTop: '20px', borderTop: '1px solid var(--danger)' }}>
+                                <h4 style={{ color: 'var(--danger)', marginBottom: '15px' }}>Danger Zone</h4>
+
+                                <div style={{ display: 'flex', gap: '10px', flexDirection: 'column' }}>
+                                    <button
+                                        className="cancel-btn"
+                                        style={{ borderColor: 'var(--danger)', color: 'var(--danger)' }}
+                                        onClick={async () => {
+                                            const curr = prompt("Enter current password:");
+                                            const newPass = prompt("Enter new password (Min 8 chars, 1 Uppercase, 1 Number, 1 Special):");
+                                            if (curr && newPass) {
+                                                try {
+                                                    const res = await changePassword(curr, newPass);
+                                                    alert(res.data.message);
+                                                } catch (err) {
+                                                    alert(err.response?.data?.message || "Error changing password");
+                                                }
+                                            }
+                                        }}
+                                    >
+                                        Reset Password
+                                    </button>
+
+                                    <button
+                                        className="cancel-btn"
+                                        style={{ background: 'rgba(255, 77, 77, 0.1)', borderColor: 'var(--danger)', color: 'var(--danger)' }}
+                                        onClick={async () => {
+                                            if (window.confirm("WARNING: This will permanently delete your account, all your classes, and all attendance records. This cannot be undone. Type 'OK' to confirm.")) {
+                                                try {
+                                                    await deleteAccount();
+                                                    onLogout(); // Log them out immediately
+                                                } catch (err) {
+                                                    alert("Failed to delete account.");
+                                                }
+                                            }
+                                        }}
+                                    >
+                                        Delete Account
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                        {/* --- END DANGER ZONE --- */}
 
                         <div className="modal-actions" style={{ marginTop: '25px' }}>
                             <button className="cancel-btn" onClick={() => { setShowProfileModal(false); setIsEditingProfile(false); }}>Close</button>

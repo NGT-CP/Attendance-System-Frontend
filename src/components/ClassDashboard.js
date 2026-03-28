@@ -253,6 +253,11 @@ function ClassDashboard() {
             try {
                 const res = await markClassCancelled(id);
                 if (res.data.success) {
+                    // Stop the timer and clear the code from the UI
+                    setSessionCode(null);
+                    setTimeLeft(0);
+                    setGeoMessage('');
+
                     fetchClassData();
                     socketRef.current?.emit('attendance_marked', id);
                 }
@@ -272,9 +277,9 @@ function ClassDashboard() {
                     fetchClassData();
                     socketRef.current?.emit('attendance_marked', id);
                 }
-        } catch (err) { 
-            showAlert("Error", err.response?.data?.message || "Failed to start attendance session.");
-        }
+            } catch (err) {
+                showAlert("Error", err.response?.data?.message || "Failed to start attendance session.");
+            }
             setIsLoading(false);
         };
 

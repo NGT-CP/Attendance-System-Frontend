@@ -1,9 +1,6 @@
 import axios from 'axios';
 import fpPromise from '@fingerprintjs/fingerprintjs';
 
-console.log("🚨 THE API URL REACT SEES IS:", process.env.REACT_APP_API_URL);
-
-// Create a central axios instance
 const API = axios.create({
     baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5000/api',
 });
@@ -21,7 +18,7 @@ const getDeviceFingerprint = async () => {
         return fp;
     } catch (err) {
         console.warn("Failed to generate fingerprint:", err);
-        return 'UNKNOWN_DEVICE_FRONTEND'; // Fallback so the request doesn't crash
+        return 'UNKNOWN_DEVICE'; // Fallback so the request doesn't crash
     }
 };
 
@@ -82,5 +79,11 @@ export const regenerateClassCode = (classId) =>
 
 export const deleteClass = (classId) =>
     API.delete(`/classes/${classId}/delete`);
+
+export const changePassword = (currentPassword, newPassword) =>
+    API.put('/auth/profile/password', { currentPassword, newPassword });
+
+export const deleteAccount = () =>
+    API.delete('/auth/profile');
 
 export default API;
