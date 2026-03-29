@@ -67,6 +67,9 @@ export const markClassCancelled = (classId) =>
 export const fetchDashboardData = (classId) =>
     API.get(`/classes/${classId}/dashboard-data`);
 
+export const fetchStudentProfileForTeacher = (classId, studentId) =>
+    API.get(`/classes/${classId}/student/${studentId}`);
+
 export const sendChatMessage = (noticeId, message) =>
     API.post(`/classes/notices/${noticeId}/chat`, { message });
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { startAttendanceSession, markStudentAttendance, updateClassName, regenerateClassCode, deleteClass, markClassCancelled } from '../services/api';
+import { startAttendanceSession, markStudentAttendance, updateClassName, regenerateClassCode, deleteClass, markClassCancelled, fetchStudentProfileForTeacher } from '../services/api';
 import './ClassDashboard.css';
 import CreateNotice from './CreateNotice';
 import API from '../services/api';
@@ -51,6 +51,11 @@ function ClassDashboard() {
     const [NewName, setNewName] = useState('');
 
     const [viewDate, setViewDate] = useState(new Date());
+
+    // --- STUDENT PROFILE MODAL STATE ---
+    const [showStudentModal, setShowStudentModal] = useState(false);
+    const [selectedStudent, setSelectedStudent] = useState(null);
+    const [isFetchingStudent, setIsFetchingStudent] = useState(false);
 
     // --- CUSTOM MODAL STATE ---
     const [dialog, setDialog] = useState({ isOpen: false, type: 'alert', title: '', message: '', onConfirm: null });
@@ -331,6 +336,24 @@ function ClassDashboard() {
             );
         } else {
             markSession();
+        }
+    };
+
+    const handleStudentClick = async (studentId) => {
+        if (!isTeacher) return; // Only teachers can click
+        setIsFetchingStudent(true);
+        setShowStudentModal(true);
+        try {
+            const res = await fetchStudentProfileForTeacher(id, studentId);
+            if (res.data.success) {
+                setSelectedStudent(res.data);
+            }
+        } catch (err) {
+            console.error("Failed to fetch student details", err);
+            setShowStudentModal(false);
+            showAlert("Error", err.response?.data?.message || "Failed to fetch student profile.");
+        } finally {
+            setIsFetchingStudent(false);
         }
     };
 
@@ -871,9 +894,20 @@ function ClassDashboard() {
 
                         <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '15px' }}>{roster.length} Enrolled Students</p>
 
+                        {!isTeacher && (
+                            <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '15px', fontStyle: 'italic' }}>
+                                💡 As a student, you can view attendance percentages but cannot view other students' profile details.
+                            </p>
+                        )}
+
                         <div className="roster-list" style={{ overflowY: 'auto', paddingRight: '10px' }}>
                             {roster.map(user => (
-                                <div key={user.id} className="roster-item" style={{ marginBottom: '10px' }}>
+                                <div
+                                    key={user.id}
+                                    className="roster-item"
+                                    style={{ marginBottom: '10px', cursor: isTeacher && !user.isTeacher ? 'pointer' : 'default' }}
+                                    onClick={() => isTeacher && !user.isTeacher && handleStudentClick(user.id)}
+                                >
                                     <span className="roster-name-scroll">
                                         <div className="avatar" style={{ width: '30px', height: '30px', fontSize: '12px', marginRight: '10px' }}>
                                             {user.name.charAt(0).toUpperCase()}
@@ -890,6 +924,45 @@ function ClassDashboard() {
                             ))}
                             {roster.length === 0 && <p className="text-muted">No students joined yet.</p>}
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* --- STUDENT PROFILE MODAL (TEACHER ONLY) --- */}
+            {showStudentModal && (
+                <div className="modal-overlay" onClick={() => setShowStudentModal(false)}>
+                    <div className="modal-content glass-card" onClick={(e) => e.stopPropagation()}>
+                        {isFetchingStudent || !selectedStudent ? (
+                            <div style={{ textAlign: 'center', padding: '20px' }}>Loading student data...</div>
+                        ) : (
+                            <>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '20px', borderBottom: '1px solid var(--border-color)', paddingBottom: '15px' }}>
+                                    <div className="avatar" style={{ width: '50px', height: '50px', fontSize: '20px' }}>
+                                        {selectedStudent.student.firstName.charAt(0).toUpperCase()}
+                                    </div>
+                                    <div>
+                                        <h2 style={{ margin: 0 }}>{selectedStudent.student.firstName} {selectedStudent.student.lastName}</h2>
+                                        <span style={{ color: 'var(--text-muted)', fontSize: '14px' }}>{selectedStudent.student.instituteId || 'No ID Provided'}</span>
+                                    </div>
+                                </div>
+
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '25px' }}>
+                                    <p><strong>Email:</strong> {selectedStudent.student.email}</p>
+                                    <p><strong>Mobile:</strong> {selectedStudent.student.mobile || 'N/A'}</p>
+                                    <p><strong>DOB:</strong> {selectedStudent.student.dob ? new Date(selectedStudent.student.dob).toLocaleDateString() : 'N/A'}</p>
+                                    <div style={{ marginTop: '10px', padding: '15px', background: 'rgba(255,255,255,0.05)', borderRadius: '8px' }}>
+                                        <p style={{ margin: 0, fontSize: '14px', color: 'var(--text-muted)' }}>Class Attendance</p>
+                                        <h3 style={{ margin: '5px 0 0 0', color: 'var(--accent)' }}>
+                                            {selectedStudent.attendance.attended} / {selectedStudent.attendance.total} Sessions
+                                        </h3>
+                                    </div>
+                                </div>
+
+                                <div className="modal-actions">
+                                    <button className="cancel-btn" onClick={() => setShowStudentModal(false)} style={{ width: '100%' }}>Close</button>
+                                </div>
+                            </>
+                        )}
                     </div>
                 </div>
             )}
