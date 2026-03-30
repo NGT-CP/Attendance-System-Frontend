@@ -905,8 +905,16 @@ function ClassDashboard() {
                                 <div
                                     key={user.id}
                                     className="roster-item"
-                                    style={{ marginBottom: '10px', cursor: isTeacher && !user.isTeacher ? 'pointer' : 'default' }}
-                                    onClick={() => isTeacher && !user.isTeacher && handleStudentClick(user.id)}
+                                    style={{
+                                        marginBottom: '10px',
+                                        cursor: isTeacher ? 'pointer' : 'default',
+                                        padding: '10px',
+                                        borderRadius: '8px',
+                                        transition: 'background 0.2s',
+                                        // Optional hover effect only for teachers
+                                        ...(isTeacher && { ':hover': { background: 'rgba(255,255,255,0.05)' } })
+                                    }}
+                                    onClick={() => isTeacher && handleStudentClick(user.id)}
                                 >
                                     <span className="roster-name-scroll">
                                         <div className="avatar" style={{ width: '30px', height: '30px', fontSize: '12px', marginRight: '10px' }}>
@@ -950,11 +958,38 @@ function ClassDashboard() {
                                     <p><strong>Email:</strong> {selectedStudent.student.email}</p>
                                     <p><strong>Mobile:</strong> {selectedStudent.student.mobile || 'N/A'}</p>
                                     <p><strong>DOB:</strong> {selectedStudent.student.dob ? new Date(selectedStudent.student.dob).toLocaleDateString() : 'N/A'}</p>
-                                    <div style={{ marginTop: '10px', padding: '15px', background: 'rgba(255,255,255,0.05)', borderRadius: '8px' }}>
-                                        <p style={{ margin: 0, fontSize: '14px', color: 'var(--text-muted)' }}>Class Attendance</p>
-                                        <h3 style={{ margin: '5px 0 0 0', color: 'var(--accent)' }}>
-                                            {selectedStudent.attendance.attended} / {selectedStudent.attendance.total} Sessions
+                                    {/* --- BEAUTIFUL ATTENDANCE METRIC --- */}
+                                    {/* Replace your old attendance <div> inside the modal with this */}
+                                    <div style={{
+                                        marginTop: '15px',
+                                        padding: '20px',
+                                        background: 'rgba(111, 92, 194, 0.1)',
+                                        borderRadius: '12px',
+                                        border: '1px solid var(--accent, #6f5cc2)'
+                                    }}>
+                                        <p style={{ margin: 0, fontSize: '14px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                                            Class Attendance Record
+                                        </p>
+
+                                        <h3 style={{ margin: '10px 0 5px 0', color: 'var(--accent, #6f5cc2)', fontSize: '28px', display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+                                            {selectedStudent.attendance.attended}
+                                            <span style={{ fontSize: '16px', color: 'var(--text-muted)', fontWeight: 'normal' }}>out of</span>
+                                            {selectedStudent.attendance.total}
+                                            <span style={{ fontSize: '16px', color: 'var(--text-muted)', fontWeight: 'normal' }}>classes</span>
                                         </h3>
+
+                                        <p style={{
+                                            margin: 0,
+                                            fontSize: '14px',
+                                            fontWeight: 'bold',
+                                            color: selectedStudent.attendance.total > 0 && (selectedStudent.attendance.attended / selectedStudent.attendance.total) >= 0.75
+                                                ? '#00ff88'
+                                                : '#ff4d4d'
+                                        }}>
+                                            {selectedStudent.attendance.total > 0
+                                                ? Math.round((selectedStudent.attendance.attended / selectedStudent.attendance.total) * 100)
+                                                : 0}% Attendance Rate
+                                        </p>
                                     </div>
                                 </div>
 

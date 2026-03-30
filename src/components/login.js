@@ -8,6 +8,21 @@ function Login({ onLogin }) {
     const [loginData, setLoginData] = useState({ email: '', password: '' });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
+
+    const IconEye = () => (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+            <circle cx="12" cy="12" r="3"></circle>
+        </svg>
+    );
+
+    const IconEyeOff = () => (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+            <line x1="1" y1="1" x2="23" y2="23"></line>
+        </svg>
+    );
 
     const handleChange = (e) => {
         setLoginData({
@@ -68,13 +83,37 @@ function Login({ onLogin }) {
                         value={loginData.email}
                         onChange={handleChange}
                     />
-                    <input
-                        name="password"
-                        type="password"
-                        placeholder="Password"
-                        value={loginData.password}
-                        onChange={handleChange}
-                    />
+                    {/* WRAPPER IS REQUIRED FOR POSITION: ABSOLUTE TO WORK */}
+                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center', width: '100%' }}>
+                        <input
+                            name="password"
+                            type={showPassword ? "text" : "password"} // 👈 Toggles the text visibility
+                            placeholder="Password"
+                            value={loginData.password}
+                            onChange={handleChange} // 👈 Uses your existing loginData handler
+                            style={{ width: '100%', paddingRight: '40px' }}
+                        />
+
+                        <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            style={{
+                                position: 'absolute',
+                                right: '10px',
+                                background: 'none',
+                                border: 'none',
+                                color: 'var(--text-muted, #888)',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                padding: '0'
+                            }}
+                            title={showPassword ? "Hide password" : "Show password"}
+                        >
+                            {showPassword ? <IconEyeOff /> : <IconEye />}
+                        </button>
+                    </div>
 
                     {/* ERROR DISPLAY INJECTED HERE */}
                     {error && (
