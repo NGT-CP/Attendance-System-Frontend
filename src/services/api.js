@@ -56,8 +56,11 @@ API.interceptors.request.use(async (req) => {
 
     // 🛡️ CRITICAL FIX: Attach CSRF Token to state-changing requests
     // CSRF protects against malicious websites silently POST/PUT/DELETE to our API
-    if (csrfToken && ['post', 'put', 'delete', 'patch'].includes(req.method)) {
-        req.headers['CSRF-Token'] = csrfToken;
+    // Skip CSRF for auth routes (login/register) - they're protected by rate limiting
+    // Attach CSRF only for class operations which are more sensitive
+    const isAuthRoute = req.url.includes('/auth/');
+    if (csrfToken && !isAuthRoute && ['post', 'put', 'delete', 'patch'].includes(req.method.toLowerCase())) {
+        req.headers['x-csrf-token'] = csrfToken;
     }
 
     return req;

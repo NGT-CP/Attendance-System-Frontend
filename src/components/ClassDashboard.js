@@ -300,7 +300,8 @@ function ClassDashboard() {
         setIsLoading(true);
         const startSession = async (lat = null, lng = null) => {
             try {
-                const res = await startAttendanceSession(id, lat, lng);
+                // 🛡️ FIX: Pass 'useGps' as the 4th argument so the backend knows the checkbox choice
+                const res = await startAttendanceSession(id, lat, lng, useGps);
                 if (res.data.success) {
                     setSessionCode(res.data.code);
                     setTimeLeft(120);
