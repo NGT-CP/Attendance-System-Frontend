@@ -148,8 +148,16 @@ function ClassDashboard() {
             }
         } catch (error) {
             console.error("Dashboard Fetch Error:", error);
-            showAlert("Error", "Failed to load dashboard data.");
-            navigate('/dashboard');
+
+            // Only handle non-auth errors here - interceptor handles 401/403
+            if (error.response?.status === 404) {
+                showAlert("Error", "Class not found.");
+                navigate('/dashboard');
+            } else if (error.response?.status !== 401 && error.response?.status !== 403) {
+                showAlert("Error", error.response?.data?.message || "Failed to load dashboard data.");
+                navigate('/dashboard');
+            }
+            // For 401/403: let interceptor handle it (no action here)
         } finally {
             setIsLoading(false);
         }
@@ -196,12 +204,14 @@ function ClassDashboard() {
 
     useEffect(() => {
         const socketUrl = process.env.REACT_APP_API_URL ? process.env.REACT_APP_API_URL.replace('/api', '') : "http://localhost:5000";
-        const token = localStorage.getItem('token');
 
+        // 🛡️ CRITICAL FIX: Explicitly send token to socket server
         const socket = io(socketUrl, {
             transports: ['polling', 'websocket'],
-            auth: { token: token },
-            extraHeaders: { Authorization: `Bearer ${token}` },
+            withCredentials: true,
+            auth: {
+                token: localStorage.getItem('token')
+            },
             reconnection: true,
             reconnectionAttempts: 5,
             reconnectionDelay: 2000
@@ -210,6 +220,7 @@ function ClassDashboard() {
         socketRef.current = socket;
 
         socket.on("connect", () => {
+            console.log("Socket connected successfully");
             socket.emit("join_class_room", id);
         });
 
@@ -219,6 +230,21 @@ function ClassDashboard() {
 
         socket.on("update_attendance_count", () => {
             setRefreshTrigger(prev => prev + 1);
+        });
+
+        // 🛡️ HIGH FIX: Add error handlers to catch auth and connection failures
+        socket.on("connect_error", (error) => {
+            console.error("Socket connection error:", error);
+            // Log but don't show alerts for every socket error
+            // The API interceptor will handle 401/403 from HTTP calls
+        });
+
+        socket.on("error", (error) => {
+            console.error("Socket error:", error);
+        });
+
+        socket.on("disconnect", (reason) => {
+            console.log("Socket disconnected:", reason);
         });
 
         return () => socket.disconnect();
