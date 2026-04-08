@@ -196,7 +196,7 @@ function Dashboard({ onLogout }) {
                                 </div>
                                 <div className="glass-card stat-card">
                                     <h3>Average Attendance</h3>
-                                    <div className="stat-value">{classes.length > 0 ? Math.round(classes.reduce((acc, c) => acc + c.attendancePercent, 0) / classes.length) : 0}%</div>
+                                    <div className="stat-value">{classes.length > 0 ? Math.floor(classes.reduce((acc, c) => acc + c.attendancePercent, 0) / classes.length) : 0}%</div>
                                     <p className="stat-desc">Across all subjects</p>
                                 </div>
                             </div>

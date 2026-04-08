@@ -56,6 +56,7 @@ function ClassDashboard() {
     const [showStudentModal, setShowStudentModal] = useState(false);
     const [selectedStudent, setSelectedStudent] = useState(null);
     const [isFetchingStudent, setIsFetchingStudent] = useState(false);
+    const [selectedStudentId, setSelectedStudentId] = useState(null);
 
     // --- CUSTOM MODAL STATE ---
     const [dialog, setDialog] = useState({ isOpen: false, type: 'alert', title: '', message: '', onConfirm: null });
@@ -290,7 +291,13 @@ function ClassDashboard() {
                     setGeoMessage('');
 
                     fetchClassData();
-                    socketRef.current?.emit('attendance_marked', id);
+
+                    // BUG FIX: Warn teacher if live socket connection failed
+                    if (!socketRef.current?.connected) {
+                        showAlert("Warning", "Class marked as cancelled, but the live connection dropped. Tell students to manually refresh their page!");
+                    } else {
+                        socketRef.current.emit('attendance_marked', id);
+                    }
                 }
             } catch (err) { showAlert("Error", "Failed to mark leave"); }
         });
@@ -307,7 +314,13 @@ function ClassDashboard() {
                     setTimeLeft(120);
                     setGeoMessage('');
                     fetchClassData();
-                    socketRef.current?.emit('attendance_marked', id);
+
+                    // BUG FIX: Warn teacher if live socket connection failed
+                    if (!socketRef.current?.connected) {
+                        showAlert("Warning", "Code generated successfully, but the live connection dropped. Tell students to manually refresh their page!");
+                    } else {
+                        socketRef.current.emit('attendance_marked', id);
+                    }
                 }
             } catch (err) {
                 showAlert("Error", err.response?.data?.message || "Failed to start attendance session.");
@@ -347,8 +360,8 @@ function ClassDashboard() {
         if ("geolocation" in navigator) {
             navigator.geolocation.getCurrentPosition(
                 pos => {
-                    if (pos.coords.accuracy > 500) {
-                        setGeoMessage("Location signal too weak. Please turn on Wi-Fi or step outside.");
+                    if (pos.coords.accuracy > 150) {
+                        setGeoMessage("Location signal too weak or inaccurate. Please step outside or connect to Wi-Fi.");
                         setIsLoading(false);
                         return;
                     }
@@ -368,8 +381,10 @@ function ClassDashboard() {
 
     const handleStudentClick = async (studentId) => {
         if (!isTeacher) return; // Only teachers can click
+        setSelectedStudentId(studentId); // Store for retry
         setIsFetchingStudent(true);
-        setShowStudentModal(true);
+        setSelectedStudent(null); // Reset state
+        setShowStudentModal(true); // Open modal immediately to show loading
         try {
             const res = await fetchStudentProfileForTeacher(id, studentId);
             if (res.data.success) {
@@ -377,8 +392,8 @@ function ClassDashboard() {
             }
         } catch (err) {
             console.error("Failed to fetch student details", err);
-            setShowStudentModal(false);
-            showAlert("Error", err.response?.data?.message || "Failed to fetch student profile.");
+            // BUG FIX: Instead of closing the modal, set error state so user can retry
+            setSelectedStudent({ error: err.response?.data?.message || "Failed to fetch student profile. Please try again." });
         } finally {
             setIsFetchingStudent(false);
         }
@@ -923,7 +938,7 @@ function ClassDashboard() {
 
                         {!isTeacher && (
                             <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '15px', fontStyle: 'italic' }}>
-                                💡 As a student, you can view attendance percentages but cannot view other students' profile details.
+                                💡 As a student, you can see who is in the class, but you cannot view other students' attendance or profile details.
                             </p>
                         )}
 
@@ -967,9 +982,17 @@ function ClassDashboard() {
             {showStudentModal && (
                 <div className="modal-overlay" onClick={() => setShowStudentModal(false)}>
                     <div className="modal-content glass-card" onClick={(e) => e.stopPropagation()}>
-                        {isFetchingStudent || !selectedStudent ? (
+                        {isFetchingStudent ? (
                             <div style={{ textAlign: 'center', padding: '20px' }}>Loading student data...</div>
-                        ) : (
+                        ) : selectedStudent?.error ? (
+                            <div style={{ textAlign: 'center', padding: '20px' }}>
+                                <p style={{ color: '#ff4d4d', marginBottom: '15px' }}>{selectedStudent.error}</p>
+                                <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+                                    <button className="join-class-btn" onClick={() => handleStudentClick(selectedStudentId)} style={{ flex: 1 }}>Retry</button>
+                                    <button className="cancel-btn" onClick={() => setShowStudentModal(false)} style={{ flex: 1 }}>Close</button>
+                                </div>
+                            </div>
+                        ) : selectedStudent ? (
                             <>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '20px', borderBottom: '1px solid var(--border-color)', paddingBottom: '15px' }}>
                                     <div className="avatar" style={{ width: '50px', height: '50px', fontSize: '20px' }}>
@@ -1014,7 +1037,7 @@ function ClassDashboard() {
                                                 : '#ff4d4d'
                                         }}>
                                             {selectedStudent.attendance.total > 0
-                                                ? Math.round((selectedStudent.attendance.attended / selectedStudent.attendance.total) * 100)
+                                                ? Math.floor((selectedStudent.attendance.attended / selectedStudent.attendance.total) * 100)
                                                 : 0}% Attendance Rate
                                         </p>
                                     </div>
