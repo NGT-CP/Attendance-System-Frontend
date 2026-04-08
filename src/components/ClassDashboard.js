@@ -126,7 +126,7 @@ function ClassDashboard() {
                 if (data.allSessions) {
                     data.allSessions.forEach(session => {
                         const dateObj = new Date(session.createdAt);
-                        const dateKey = `${dateObj.getFullYear()}-${dateObj.getMonth()}-${dateObj.getDate()}`;
+                        const dateKey = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')}`;
                         if (session.session_code === 'CANCELLED') {
                             attMap[dateKey] = 'CANCELLED';
                         } else if (teacherCheck) {
@@ -139,7 +139,7 @@ function ClassDashboard() {
                 if (data.attendance) {
                     data.attendance.forEach(record => {
                         const dateObj = new Date(record.AttendanceSession.createdAt);
-                        const dateKey = `${dateObj.getFullYear()}-${dateObj.getMonth()}-${dateObj.getDate()}`;
+                        const dateKey = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')}`;
                         if (attMap[dateKey] !== 'CANCELLED') {
                             attMap[dateKey] = record.status;
                         }
@@ -271,7 +271,7 @@ function ClassDashboard() {
     const daysInMonth = Array.from({ length: new Date(currentYear, currentMonth + 1, 0).getDate() }, (_, i) => i + 1);
 
     const getAttendanceClass = (day) => {
-        const dateKey = `${currentYear}-${currentMonth}-${day}`;
+        const dateKey = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
         const status = attendanceDict[dateKey];
         if (status === 'CANCELLED') return 'cancelled';
         if (status === 'PRESENT') return 'present';
@@ -1047,7 +1047,8 @@ function ClassDashboard() {
                                     <button className="cancel-btn" onClick={() => setShowStudentModal(false)} style={{ width: '100%' }}>Close</button>
                                 </div>
                             </>
-                        )}
+                        ) : null
+                        }
                     </div>
                 </div>
             )}
