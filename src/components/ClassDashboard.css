@@ -15,9 +15,9 @@
 @media screen and (max-width: 768px) {
     .class-dashboard-container {
         padding: 12px;
+        padding-bottom: max(12px, env(safe-area-inset-bottom, 12px));
         height: 100dvh;
         overflow: hidden;
-        padding-bottom: env(safe-area-inset-bottom, 12px) !important;
     }
 }
 
@@ -110,12 +110,14 @@
     border-radius: 16px;
     padding: 20px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    margin-bottom: 20px;
 }
 
 @media screen and (max-width: 768px) {
     .glass-panel {
         padding: 15px;
         border-radius: 12px;
+        margin-bottom: max(20px, 20px + env(safe-area-inset-bottom, 0px));
     }
 }
 
@@ -193,7 +195,7 @@
         /* Aligns things nicely if the title wraps to two lines */
     }
     .left-main-column {
-        padding-bottom: 120px !important;
+        padding-bottom: max(120px, 120px + env(safe-area-inset-bottom, 0px)) !important;
         padding-right: 2px;
     }
 }
@@ -396,12 +398,14 @@
     border-radius: 12px;
     transition: all 0.2s ease;
     position: relative;
+    margin-bottom: 15px;
 }
 
 @media screen and (max-width: 768px) {
     .notice-card {
         padding: 12px;
         border-radius: 10px;
+        margin-bottom: max(15px, 15px + env(safe-area-inset-bottom, 0px));
     }
 }
 
@@ -1025,12 +1029,14 @@
     gap: 8px;
     box-shadow: 0 4px 12px rgba(111, 92, 194, 0.3);
     font-size: 14px;
+    margin-bottom: 0;
 }
 
 @media screen and (max-width: 768px) {
     .join-class-btn {
         padding: 10px 16px;
         font-size: 13px;
+        margin-bottom: max(0px, env(safe-area-inset-bottom, 0px));
     }
 }
 
@@ -1051,6 +1057,7 @@
     padding: 15px;
     font-size: 16px;
     margin-top: 15px;
+    margin-bottom: max(0px, env(safe-area-inset-bottom, 0px));
 }
 
 @media screen and (max-width: 768px) {
@@ -1058,6 +1065,7 @@
         padding: 12px;
         font-size: 14px;
         margin-top: 10px;
+        margin-bottom: max(20px, 20px + env(safe-area-inset-bottom, 0px));
     }
 }
 
@@ -1345,6 +1353,7 @@
     width: 100%;
     padding: 10px;
     margin-top: 15px;
+    margin-bottom: max(0px, env(safe-area-inset-bottom, 0px));
     border-radius: 8px;
     cursor: pointer;
     font-weight: bold;
@@ -1357,6 +1366,7 @@
         padding: 8px;
         font-size: 13px;
         margin-top: 10px;
+        margin-bottom: max(20px, 20px + env(safe-area-inset-bottom, 0px));
     }
 }
 
@@ -2204,6 +2214,7 @@
 @media screen and (max-width: 768px) {
     .modal-overlay {
         padding: 10px;
+        padding-bottom: max(10px, env(safe-area-inset-bottom, 10px));
         align-items: center;
         justify-content: center;
     }
@@ -2225,9 +2236,10 @@
 @media screen and (max-width: 768px) {
     .modal-content {
         border-radius: 12px;
-        max-height: calc(100vh - 20px);
+        max-height: calc(100vh - 40px);
         width: 100%;
         max-width: 100%;
+        margin-bottom: env(safe-area-inset-bottom, 0px);
     }
 }
 
@@ -2288,13 +2300,16 @@
     flex-shrink: 0;
     border-top: 1px solid rgba(255, 255, 255, 0.05);
     background: rgba(0, 0, 0, 0.2);
+    padding-bottom: max(20px, 20px + env(safe-area-inset-bottom, 0px));
 }
 
 @media screen and (max-width: 768px) {
     .modal-actions {
         gap: 10px;
         padding: 15px;
+        padding-bottom: max(15px, 15px + env(safe-area-inset-bottom, 0px));
         justify-content: stretch;
+        margin-bottom: env(safe-area-inset-bottom, 0px);
     }
 
     .modal-actions button {
@@ -2350,7 +2365,8 @@
 @media screen and (max-width: 768px) {
     .glass-card {
         border-radius: 12px;
-        max-height: calc(100vh - 20px);
+        max-height: calc(100vh - 40px);
+        margin-bottom: env(safe-area-inset-bottom, 0px);
     }
 }
 
@@ -2359,11 +2375,13 @@
     overflow-y: auto;
     padding: 25px;
     flex: 1;
+    padding-bottom: max(25px, 25px + env(safe-area-inset-bottom, 0px));
 }
 
 @media screen and (max-width: 768px) {
     .glass-card > div:not(.modal-actions) {
         padding: 15px;
+        padding-bottom: max(50px, 50px + env(safe-area-inset-bottom, 0px));
     }
 }
 
@@ -2371,11 +2389,13 @@
     padding: 20px 25px;
     border-top: 1px solid rgba(255, 255, 255, 0.05);
     background: rgba(0, 0, 0, 0.2);
+    padding-bottom: max(20px, 20px + env(safe-area-inset-bottom, 0px));
 }
 
 @media screen and (max-width: 768px) {
     .glass-card .modal-actions {
         padding: 15px;
+        padding-bottom: max(15px, 15px + env(safe-area-inset-bottom, 0px));
     }
 }
 
