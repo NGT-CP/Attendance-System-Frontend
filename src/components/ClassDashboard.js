@@ -20,6 +20,7 @@ function ClassDashboard() {
     const [isTeacher, setIsTeacher] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [showRosterModal, setShowRosterModal] = useState(false);
+    const [studentAttendancePercent, setStudentAttendancePercent] = useState(null);
 
     const [notices, setNotices] = useState([]);
     const [activeNotice, setActiveNotice] = useState(null);
@@ -57,6 +58,8 @@ function ClassDashboard() {
     const [selectedStudent, setSelectedStudent] = useState(null);
     const [isFetchingStudent, setIsFetchingStudent] = useState(false);
     const [selectedStudentId, setSelectedStudentId] = useState(null);
+    const [presentDates, setPresentDates] = useState([]);
+    const [profileModalViewDate, setProfileModalViewDate] = useState(new Date());
 
     // --- CUSTOM MODAL STATE ---
     const [dialog, setDialog] = useState({ isOpen: false, type: 'alert', title: '', message: '', onConfirm: null });
@@ -115,6 +118,7 @@ function ClassDashboard() {
                 const teacherCheck = data.classroom.owner_id === authRes.data.user.id;
                 setIsTeacher(teacherCheck);
                 setNotices(normalizedNotices);
+                setStudentAttendancePercent(data.studentAttendancePercent);  // NEW: Store student %
                 setActiveNotice(prevActive => {
                     if (!prevActive) return null;
                     const freshNotice = normalizedNotices.find(n => n.id === prevActive.id);
@@ -389,6 +393,7 @@ function ClassDashboard() {
             const res = await fetchStudentProfileForTeacher(id, studentId);
             if (res.data.success) {
                 setSelectedStudent(res.data);
+                setPresentDates(res.data.presentDates || []);  // NEW: Store present dates
             }
         } catch (err) {
             console.error("Failed to fetch student details", err);
@@ -583,6 +588,29 @@ function ClassDashboard() {
                 <div className="left-main-column">
 
                     <div className="glass-panel">
+                        {/* NEW: Student Attendance Percentage Banner */}
+                        {!isTeacher && studentAttendancePercent !== null && (
+                            <div style={{
+                                marginBottom: '20px',
+                                padding: '15px 20px',
+                                borderRadius: '10px',
+                                background: studentAttendancePercent >= 75
+                                    ? 'rgba(0, 255, 136, 0.1)'
+                                    : 'rgba(255, 77, 77, 0.1)',
+                                borderLeft: `4px solid ${studentAttendancePercent >= 75 ? '#00ff88' : '#ff4d4d'}`
+                            }}>
+                                <p style={{ margin: '0 0 8px 0', fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                                    Your Attendance
+                                </p>
+                                <h3 style={{ margin: 0, fontSize: '32px', fontWeight: 'bold', color: studentAttendancePercent >= 75 ? '#00ff88' : '#ff4d4d' }}>
+                                    {studentAttendancePercent}%
+                                </h3>
+                                <p style={{ margin: '5px 0 0 0', fontSize: '12px', color: 'var(--text-muted)' }}>
+                                    {studentAttendancePercent >= 75 ? '✓ You are on track' : '⚠ Attendance is low'}
+                                </p>
+                            </div>
+                        )}
+
                         <div className="calendar-header">
                             <button className="calendar-nav-btn" onClick={handlePrevMonth}>&lt;</button>
                             <h4>{viewDate.toLocaleString('default', { month: 'long', year: 'numeric' })}</h4>
@@ -1040,6 +1068,122 @@ function ClassDashboard() {
                                                 ? Math.floor((selectedStudent.attendance.attended / selectedStudent.attendance.total) * 100)
                                                 : 0}% Attendance Rate
                                         </p>
+                                    </div>
+
+                                    {/* --- NEW: STUDENT CALENDAR GRID --- */}
+                                    <div style={{
+                                        marginTop: '25px',
+                                        padding: '20px',
+                                        background: 'rgba(111, 92, 194, 0.05)',
+                                        borderRadius: '12px',
+                                        border: '1px solid var(--border-color)'
+                                    }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                                            <p style={{ margin: 0, fontSize: '14px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                                                📅 Attendance Calendar
+                                            </p>
+                                        </div>
+
+                                        {/* Calendar Navigation */}
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                                            <button
+                                                className="calendar-nav-btn"
+                                                onClick={() => setProfileModalViewDate(new Date(profileModalViewDate.getFullYear(), profileModalViewDate.getMonth() - 1, 1))}
+                                                style={{ padding: '5px 10px', fontSize: '14px' }}
+                                            >
+                                                &lt;
+                                            </button>
+                                            <h4 style={{ margin: 0 }}>
+                                                {profileModalViewDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
+                                            </h4>
+                                            <button
+                                                className="calendar-nav-btn"
+                                                onClick={() => setProfileModalViewDate(new Date(profileModalViewDate.getFullYear(), profileModalViewDate.getMonth() + 1, 1))}
+                                                style={{ padding: '5px 10px', fontSize: '14px' }}
+                                            >
+                                                &gt;
+                                            </button>
+                                        </div>
+
+                                        {/* Day Headers */}
+                                        <div style={{
+                                            display: 'grid',
+                                            gridTemplateColumns: 'repeat(7, 1fr)',
+                                            gap: '4px',
+                                            marginBottom: '8px'
+                                        }}>
+                                            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                                                <div key={day} style={{ textAlign: 'center', fontSize: '11px', fontWeight: 'bold', color: 'var(--text-muted)', padding: '5px' }}>
+                                                    {day}
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        {/* Calendar Grid */}
+                                        <div style={{
+                                            display: 'grid',
+                                            gridTemplateColumns: 'repeat(7, 1fr)',
+                                            gap: '4px'
+                                        }}>
+                                            {(() => {
+                                                const year = profileModalViewDate.getFullYear();
+                                                const month = profileModalViewDate.getMonth();
+                                                const firstDay = new Date(year, month, 1).getDay();
+                                                const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+                                                // Convert presentDates to a Set for easy lookup
+                                                const presentDatesSet = new Set(presentDates);
+
+                                                const cells = [];
+
+                                                // Empty cells for days before the month starts
+                                                for (let i = 0; i < firstDay; i++) {
+                                                    cells.push(
+                                                        <div key={`empty-${i}`} style={{ padding: '8px', fontSize: '12px' }}></div>
+                                                    );
+                                                }
+
+                                                // Days of the month
+                                                for (let day = 1; day <= daysInMonth; day++) {
+                                                    const dateStr = new Date(year, month, day).toDateString();
+                                                    const isAttended = presentDatesSet.has(dateStr);
+
+                                                    cells.push(
+                                                        <div
+                                                            key={day}
+                                                            style={{
+                                                                padding: '8px',
+                                                                textAlign: 'center',
+                                                                borderRadius: '6px',
+                                                                fontSize: '12px',
+                                                                fontWeight: '500',
+                                                                background: isAttended ? 'rgba(0, 255, 136, 0.2)' : 'transparent',
+                                                                border: isAttended ? '1px solid rgba(0, 255, 136, 0.4)' : '1px solid var(--border-color)',
+                                                                color: isAttended ? '#00ff88' : 'var(--text-color)',
+                                                                cursor: 'default',
+                                                                transition: 'all 0.2s'
+                                                            }}
+                                                        >
+                                                            {day}
+                                                        </div>
+                                                    );
+                                                }
+
+                                                return cells;
+                                            })()}
+                                        </div>
+
+                                        {/* Legend */}
+                                        <div style={{ marginTop: '15px', display: 'flex', gap: '15px', fontSize: '12px' }}>
+                                            <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                                <div style={{ width: '16px', height: '16px', borderRadius: '3px', background: 'rgba(0, 255, 136, 0.2)', border: '1px solid rgba(0, 255, 136, 0.4)' }}></div>
+                                                Present
+                                            </span>
+                                            <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                                <div style={{ width: '16px', height: '16px', borderRadius: '3px', border: '1px solid var(--border-color)' }}></div>
+                                                No Class/Absent
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
 
