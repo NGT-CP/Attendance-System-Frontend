@@ -2203,7 +2203,7 @@
 
 @media screen and (max-width: 768px) {
     .modal-overlay {
-        padding: 12px;
+        padding: 10px;
         align-items: center;
         justify-content: center;
     }
@@ -2213,29 +2213,44 @@
     background: rgba(25, 25, 25, 0.95);
     border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
     border-radius: 16px;
-    padding: 25px;
     max-width: 600px;
     width: 100%;
-    max-height: 90vh;
-    overflow-y: auto;
+    max-height: 95vh;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
     display: flex;
     flex-direction: column;
+    overflow: hidden;
 }
 
 @media screen and (max-width: 768px) {
     .modal-content {
-        padding: 15px;
         border-radius: 12px;
-        max-height: calc(100vh - 30px);
+        max-height: calc(100vh - 20px);
         width: 100%;
         max-width: 100%;
     }
 }
 
+/* Scrollable content area inside modal */
+.modal-content > *:not(.modal-actions):not(h2) {
+    flex-shrink: 0;
+}
+
+.modal-content > div:first-child {
+    overflow-y: auto;
+    padding: 25px;
+    flex: 1;
+}
+
+@media screen and (max-width: 768px) {
+    .modal-content > div:first-child {
+        padding: 15px;
+    }
+}
+
 .modal-content h2 {
-    margin-top: 0;
-    margin-bottom: 20px;
+    margin: 0;
+    padding: 25px 25px 0 25px;
     font-size: 20px;
     flex-shrink: 0;
 }
@@ -2243,14 +2258,13 @@
 @media screen and (max-width: 768px) {
     .modal-content h2 {
         font-size: 18px;
-        margin-bottom: 15px;
+        padding: 15px 15px 0 15px;
     }
 }
 
 .modal-content h3 {
     margin: 15px 0 10px 0;
     font-size: 16px;
-    flex-shrink: 0;
 }
 
 @media screen and (max-width: 768px) {
@@ -2263,20 +2277,23 @@
 .modal-content p {
     word-break: break-word;
     line-height: 1.5;
+    margin: 0 0 15px 0;
 }
 
 .modal-actions {
     display: flex;
     gap: 15px;
-    margin-top: 25px;
+    padding: 20px 25px;
     justify-content: flex-end;
     flex-shrink: 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    background: rgba(0, 0, 0, 0.2);
 }
 
 @media screen and (max-width: 768px) {
     .modal-actions {
         gap: 10px;
-        margin-top: 20px;
+        padding: 15px;
         justify-content: stretch;
     }
 
@@ -2297,6 +2314,7 @@
     transition: all 0.2s ease;
     font-size: 14px;
     flex-shrink: 0;
+    white-space: nowrap;
 }
 
 @media screen and (max-width: 768px) {
@@ -2323,17 +2341,41 @@
     -webkit-backdrop-filter: blur(10px);
     border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
     border-radius: 16px;
-    padding: 25px;
     display: flex;
     flex-direction: column;
-    max-height: 90vh;
+    max-height: 95vh;
+    overflow: hidden;
 }
 
 @media screen and (max-width: 768px) {
     .glass-card {
-        padding: 15px;
         border-radius: 12px;
-        max-height: calc(100vh - 30px);
+        max-height: calc(100vh - 20px);
+    }
+}
+
+/* Scrollable inner content for glass-card */
+.glass-card > div:not(.modal-actions) {
+    overflow-y: auto;
+    padding: 25px;
+    flex: 1;
+}
+
+@media screen and (max-width: 768px) {
+    .glass-card > div:not(.modal-actions) {
+        padding: 15px;
+    }
+}
+
+.glass-card .modal-actions {
+    padding: 20px 25px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    background: rgba(0, 0, 0, 0.2);
+}
+
+@media screen and (max-width: 768px) {
+    .glass-card .modal-actions {
+        padding: 15px;
     }
 }
 
