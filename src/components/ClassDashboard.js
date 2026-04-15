@@ -1020,9 +1020,9 @@ function ClassDashboard() {
                 <div className="modal-overlay" onClick={() => setShowStudentModal(false)}>
                     <div className="modal-content glass-card" onClick={(e) => e.stopPropagation()}>
                         {isFetchingStudent ? (
-                            <div style={{ textAlign: 'center', padding: '20px' }}>Loading student data...</div>
+                            <div style={{ textAlign: 'center', padding: '20px', flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Loading student data...</div>
                         ) : selectedStudent?.error ? (
-                            <div style={{ textAlign: 'center', padding: '20px' }}>
+                            <div style={{ textAlign: 'center', padding: '20px', flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
                                 <p style={{ color: '#ff4d4d', marginBottom: '15px' }}>{selectedStudent.error}</p>
                                 <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
                                     <button className="join-class-btn" onClick={() => handleStudentClick(selectedStudentId)} style={{ flex: 1 }}>Retry</button>
@@ -1031,171 +1031,172 @@ function ClassDashboard() {
                             </div>
                         ) : selectedStudent ? (
                             <>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '20px', borderBottom: '1px solid var(--border-color)', paddingBottom: '15px' }}>
-                                    <div className="avatar" style={{ width: '50px', height: '50px', fontSize: '20px' }}>
-                                        {selectedStudent.student.firstName.charAt(0).toUpperCase()}
+                                <div style={{ overflowY: 'auto', flex: 1, paddingRight: '5px' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '20px', borderBottom: '1px solid var(--border-color)', paddingBottom: '15px' }}>
+                                        <div className="avatar" style={{ width: '50px', height: '50px', fontSize: '20px' }}>
+                                            {selectedStudent.student.firstName.charAt(0).toUpperCase()}
+                                        </div>
+                                        <div>
+                                            <h2 style={{ margin: 0 }}>{selectedStudent.student.firstName} {selectedStudent.student.lastName}</h2>
+                                            <span style={{ color: 'var(--text-muted)', fontSize: '14px' }}>{selectedStudent.student.instituteId || 'No ID Provided'}</span>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <h2 style={{ margin: 0 }}>{selectedStudent.student.firstName} {selectedStudent.student.lastName}</h2>
-                                        <span style={{ color: 'var(--text-muted)', fontSize: '14px' }}>{selectedStudent.student.instituteId || 'No ID Provided'}</span>
-                                    </div>
-                                </div>
 
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '25px' }}>
-                                    <p><strong>Email:</strong> {selectedStudent.student.email}</p>
-                                    <p><strong>Mobile:</strong> {selectedStudent.student.mobile || 'N/A'}</p>
-                                    <p><strong>DOB:</strong> {selectedStudent.student.dob ? new Date(selectedStudent.student.dob).toLocaleDateString() : 'N/A'}</p>
-                                    {/* --- BEAUTIFUL ATTENDANCE METRIC --- */}
-                                    {/* Replace your old attendance <div> inside the modal with this */}
-                                    <div style={{
-                                        marginTop: '15px',
-                                        padding: '20px',
-                                        background: 'rgba(111, 92, 194, 0.1)',
-                                        borderRadius: '12px',
-                                        border: '1px solid var(--accent, #6f5cc2)'
-                                    }}>
-                                        <p style={{ margin: 0, fontSize: '14px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>
-                                            Class Attendance Record
-                                        </p>
-
-                                        <h3 style={{ margin: '10px 0 5px 0', color: 'var(--accent, #6f5cc2)', fontSize: '28px', display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-                                            {selectedStudent.attendance.attended}
-                                            <span style={{ fontSize: '16px', color: 'var(--text-muted)', fontWeight: 'normal' }}>out of</span>
-                                            {selectedStudent.attendance.total}
-                                            <span style={{ fontSize: '16px', color: 'var(--text-muted)', fontWeight: 'normal' }}>classes</span>
-                                        </h3>
-
-                                        <p style={{
-                                            margin: 0,
-                                            fontSize: '14px',
-                                            fontWeight: 'bold',
-                                            color: selectedStudent.attendance.total > 0 && (selectedStudent.attendance.attended / selectedStudent.attendance.total) >= 0.75
-                                                ? '#00ff88'
-                                                : '#ff4d4d'
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '25px' }}>
+                                        <p><strong>Email:</strong> {selectedStudent.student.email}</p>
+                                        <p><strong>Mobile:</strong> {selectedStudent.student.mobile || 'N/A'}</p>
+                                        <p><strong>DOB:</strong> {selectedStudent.student.dob ? new Date(selectedStudent.student.dob).toLocaleDateString() : 'N/A'}</p>
+                                        {/* --- BEAUTIFUL ATTENDANCE METRIC --- */}
+                                        <div style={{
+                                            marginTop: '15px',
+                                            padding: '20px',
+                                            background: 'rgba(111, 92, 194, 0.1)',
+                                            borderRadius: '12px',
+                                            border: '1px solid var(--accent, #6f5cc2)'
                                         }}>
-                                            {selectedStudent.attendance.total > 0
-                                                ? Math.floor((selectedStudent.attendance.attended / selectedStudent.attendance.total) * 100)
-                                                : 0}% Attendance Rate
-                                        </p>
-                                    </div>
-
-                                    {/* --- NEW: STUDENT CALENDAR GRID --- */}
-                                    <div style={{
-                                        marginTop: '25px',
-                                        padding: '20px',
-                                        background: 'rgba(111, 92, 194, 0.05)',
-                                        borderRadius: '12px',
-                                        border: '1px solid var(--border-color)'
-                                    }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
                                             <p style={{ margin: 0, fontSize: '14px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>
-                                                📅 Attendance Calendar
+                                                Class Attendance Record
+                                            </p>
+
+                                            <h3 style={{ margin: '10px 0 5px 0', color: 'var(--accent, #6f5cc2)', fontSize: '28px', display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+                                                {selectedStudent.attendance.attended}
+                                                <span style={{ fontSize: '16px', color: 'var(--text-muted)', fontWeight: 'normal' }}>out of</span>
+                                                {selectedStudent.attendance.total}
+                                                <span style={{ fontSize: '16px', color: 'var(--text-muted)', fontWeight: 'normal' }}>classes</span>
+                                            </h3>
+
+                                            <p style={{
+                                                margin: 0,
+                                                fontSize: '14px',
+                                                fontWeight: 'bold',
+                                                color: selectedStudent.attendance.total > 0 && (selectedStudent.attendance.attended / selectedStudent.attendance.total) >= 0.75
+                                                    ? '#00ff88'
+                                                    : '#ff4d4d'
+                                            }}>
+                                                {selectedStudent.attendance.total > 0
+                                                    ? Math.floor((selectedStudent.attendance.attended / selectedStudent.attendance.total) * 100)
+                                                    : 0}% Attendance Rate
                                             </p>
                                         </div>
 
-                                        {/* Calendar Navigation */}
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', gap: '8px' }}>
-                                            <button
-                                                className="calendar-nav-btn"
-                                                onClick={() => setProfileModalViewDate(new Date(profileModalViewDate.getFullYear(), profileModalViewDate.getMonth() - 1, 1))}
-                                                style={{ padding: window.innerWidth <= 768 ? '4px 10px' : '5px 12px', fontSize: window.innerWidth <= 768 ? '12px' : '14px', flex: 1, minWidth: 0 }}
-                                            >
-                                                &lt;
-                                            </button>
-                                            <h4 style={{ margin: 0, fontSize: window.innerWidth <= 768 ? '13px' : '15px', whiteSpace: 'nowrap' }}>
-                                                {profileModalViewDate.toLocaleString('default', { month: 'short', year: 'numeric' })}
-                                            </h4>
-                                            <button
-                                                className="calendar-nav-btn"
-                                                onClick={() => setProfileModalViewDate(new Date(profileModalViewDate.getFullYear(), profileModalViewDate.getMonth() + 1, 1))}
-                                                style={{ padding: window.innerWidth <= 768 ? '4px 10px' : '5px 12px', fontSize: window.innerWidth <= 768 ? '12px' : '14px', flex: 1, minWidth: 0 }}
-                                            >
-                                                &gt;
-                                            </button>
-                                        </div>
-
-                                        {/* Day Headers */}
+                                        {/* --- NEW: STUDENT CALENDAR GRID --- */}
                                         <div style={{
-                                            display: 'grid',
-                                            gridTemplateColumns: 'repeat(7, 1fr)',
-                                            gap: '4px',
-                                            marginBottom: '8px'
+                                            marginTop: '25px',
+                                            padding: '20px',
+                                            background: 'rgba(111, 92, 194, 0.05)',
+                                            borderRadius: '12px',
+                                            border: '1px solid var(--border-color)'
                                         }}>
-                                            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                                                <div key={day} style={{ textAlign: 'center', fontSize: window.innerWidth <= 768 ? '9px' : '11px', fontWeight: 'bold', color: 'var(--text-muted)', padding: '5px', wordBreak: 'break-word' }}>
-                                                    {window.innerWidth <= 768 ? day.charAt(0) : day}
-                                                </div>
-                                            ))}
-                                        </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                                                <p style={{ margin: 0, fontSize: '14px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                                                    📅 Attendance Calendar
+                                                </p>
+                                            </div>
 
-                                        {/* Calendar Grid */}
-                                        <div style={{
-                                            display: 'grid',
-                                            gridTemplateColumns: 'repeat(7, 1fr)',
-                                            gap: '4px'
-                                        }}>
-                                            {(() => {
-                                                const year = profileModalViewDate.getFullYear();
-                                                const month = profileModalViewDate.getMonth();
-                                                const firstDay = new Date(year, month, 1).getDay();
-                                                const daysInMonth = new Date(year, month + 1, 0).getDate();
+                                            {/* Calendar Navigation */}
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', gap: '8px' }}>
+                                                <button
+                                                    className="calendar-nav-btn"
+                                                    onClick={() => setProfileModalViewDate(new Date(profileModalViewDate.getFullYear(), profileModalViewDate.getMonth() - 1, 1))}
+                                                    style={{ padding: window.innerWidth <= 768 ? '4px 10px' : '5px 12px', fontSize: window.innerWidth <= 768 ? '12px' : '14px', flex: 1, minWidth: 0 }}
+                                                >
+                                                    &lt;
+                                                </button>
+                                                <h4 style={{ margin: 0, fontSize: window.innerWidth <= 768 ? '13px' : '15px', whiteSpace: 'nowrap' }}>
+                                                    {profileModalViewDate.toLocaleString('default', { month: 'short', year: 'numeric' })}
+                                                </h4>
+                                                <button
+                                                    className="calendar-nav-btn"
+                                                    onClick={() => setProfileModalViewDate(new Date(profileModalViewDate.getFullYear(), profileModalViewDate.getMonth() + 1, 1))}
+                                                    style={{ padding: window.innerWidth <= 768 ? '4px 10px' : '5px 12px', fontSize: window.innerWidth <= 768 ? '12px' : '14px', flex: 1, minWidth: 0 }}
+                                                >
+                                                    &gt;
+                                                </button>
+                                            </div>
 
-                                                // Convert presentDates to a Set for easy lookup
-                                                const presentDatesSet = new Set(presentDates);
+                                            {/* Day Headers */}
+                                            <div style={{
+                                                display: 'grid',
+                                                gridTemplateColumns: 'repeat(7, 1fr)',
+                                                gap: '4px',
+                                                marginBottom: '8px'
+                                            }}>
+                                                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                                                    <div key={day} style={{ textAlign: 'center', fontSize: window.innerWidth <= 768 ? '9px' : '11px', fontWeight: 'bold', color: 'var(--text-muted)', padding: '5px', wordBreak: 'break-word' }}>
+                                                        {window.innerWidth <= 768 ? day.charAt(0) : day}
+                                                    </div>
+                                                ))}
+                                            </div>
 
-                                                const cells = [];
+                                            {/* Calendar Grid */}
+                                            <div style={{
+                                                display: 'grid',
+                                                gridTemplateColumns: 'repeat(7, 1fr)',
+                                                gap: '4px'
+                                            }}>
+                                                {(() => {
+                                                    const year = profileModalViewDate.getFullYear();
+                                                    const month = profileModalViewDate.getMonth();
+                                                    const firstDay = new Date(year, month, 1).getDay();
+                                                    const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-                                                // Empty cells for days before the month starts
-                                                for (let i = 0; i < firstDay; i++) {
-                                                    cells.push(
-                                                        <div key={`empty-${i}`} style={{ padding: '8px', fontSize: '12px' }}></div>
-                                                    );
-                                                }
+                                                    // Convert presentDates to a Set for easy lookup
+                                                    const presentDatesSet = new Set(presentDates);
 
-                                                // Days of the month
-                                                for (let day = 1; day <= daysInMonth; day++) {
-                                                    const dateStr = new Date(year, month, day).toDateString();
-                                                    const isAttended = presentDatesSet.has(dateStr);
+                                                    const cells = [];
 
-                                                    cells.push(
-                                                        <div
-                                                            key={day}
-                                                            style={{
-                                                                padding: window.innerWidth <= 768 ? '6px' : '8px',
-                                                                textAlign: 'center',
-                                                                borderRadius: '6px',
-                                                                fontSize: window.innerWidth <= 768 ? '11px' : '12px',
-                                                                fontWeight: '500',
-                                                                background: isAttended ? 'rgba(0, 255, 136, 0.2)' : 'transparent',
-                                                                border: isAttended ? '1px solid rgba(0, 255, 136, 0.4)' : '1px solid var(--border-color)',
-                                                                color: isAttended ? '#00ff88' : 'var(--text-color)',
-                                                                cursor: 'default',
-                                                                transition: 'all 0.2s',
-                                                                minHeight: window.innerWidth <= 768 ? '28px' : '32px',
-                                                                display: 'flex',
-                                                                alignItems: 'center',
-                                                                justifyContent: 'center'
-                                                            }}
-                                                        >
-                                                            {day}
-                                                        </div>
-                                                    );
-                                                }
+                                                    // Empty cells for days before the month starts
+                                                    for (let i = 0; i < firstDay; i++) {
+                                                        cells.push(
+                                                            <div key={`empty-${i}`} style={{ padding: '8px', fontSize: '12px' }}></div>
+                                                        );
+                                                    }
 
-                                                return cells;
-                                            })()}
-                                        </div>
+                                                    // Days of the month
+                                                    for (let day = 1; day <= daysInMonth; day++) {
+                                                        const dateStr = new Date(year, month, day).toDateString();
+                                                        const isAttended = presentDatesSet.has(dateStr);
 
-                                        {/* Legend */}
-                                        <div style={{ marginTop: '15px', display: 'flex', gap: '15px', fontSize: '12px' }}>
-                                            <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                                                <div style={{ width: '16px', height: '16px', borderRadius: '3px', background: 'rgba(0, 255, 136, 0.2)', border: '1px solid rgba(0, 255, 136, 0.4)' }}></div>
-                                                Present
-                                            </span>
-                                            <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                                                <div style={{ width: '16px', height: '16px', borderRadius: '3px', border: '1px solid var(--border-color)' }}></div>
-                                                No Class/Absent
-                                            </span>
+                                                        cells.push(
+                                                            <div
+                                                                key={day}
+                                                                style={{
+                                                                    padding: window.innerWidth <= 768 ? '6px' : '8px',
+                                                                    textAlign: 'center',
+                                                                    borderRadius: '6px',
+                                                                    fontSize: window.innerWidth <= 768 ? '11px' : '12px',
+                                                                    fontWeight: '500',
+                                                                    background: isAttended ? 'rgba(0, 255, 136, 0.2)' : 'transparent',
+                                                                    border: isAttended ? '1px solid rgba(0, 255, 136, 0.4)' : '1px solid var(--border-color)',
+                                                                    color: isAttended ? '#00ff88' : 'var(--text-color)',
+                                                                    cursor: 'default',
+                                                                    transition: 'all 0.2s',
+                                                                    minHeight: window.innerWidth <= 768 ? '28px' : '32px',
+                                                                    display: 'flex',
+                                                                    alignItems: 'center',
+                                                                    justifyContent: 'center'
+                                                                }}
+                                                            >
+                                                                {day}
+                                                            </div>
+                                                        );
+                                                    }
+
+                                                    return cells;
+                                                })()}
+                                            </div>
+
+                                            {/* Legend */}
+                                            <div style={{ marginTop: '15px', display: 'flex', gap: '15px', fontSize: '12px' }}>
+                                                <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                                    <div style={{ width: '16px', height: '16px', borderRadius: '3px', background: 'rgba(0, 255, 136, 0.2)', border: '1px solid rgba(0, 255, 136, 0.4)' }}></div>
+                                                    Present
+                                                </span>
+                                                <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                                    <div style={{ width: '16px', height: '16px', borderRadius: '3px', border: '1px solid var(--border-color)' }}></div>
+                                                    No Class/Absent
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
