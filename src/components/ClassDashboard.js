@@ -597,15 +597,24 @@ function ClassDashboard() {
                                 background: studentAttendancePercent >= 75
                                     ? 'rgba(0, 255, 136, 0.1)'
                                     : 'rgba(255, 77, 77, 0.1)',
-                                borderLeft: `4px solid ${studentAttendancePercent >= 75 ? '#00ff88' : '#ff4d4d'}`
+                                borderLeft: `4px solid ${studentAttendancePercent >= 75 ? '#00ff88' : '#ff4d4d'}`,
+                                '@media (max-width: 768px)': {
+                                    marginBottom: '15px',
+                                    padding: '12px 15px'
+                                }
                             }}>
                                 <p style={{ margin: '0 0 8px 0', fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>
                                     Your Attendance
                                 </p>
-                                <h3 style={{ margin: 0, fontSize: '32px', fontWeight: 'bold', color: studentAttendancePercent >= 75 ? '#00ff88' : '#ff4d4d' }}>
+                                <h3 style={{
+                                    margin: 0,
+                                    fontSize: window.innerWidth <= 768 ? '24px' : '32px',
+                                    fontWeight: 'bold',
+                                    color: studentAttendancePercent >= 75 ? '#00ff88' : '#ff4d4d'
+                                }}>
                                     {studentAttendancePercent}%
                                 </h3>
-                                <p style={{ margin: '5px 0 0 0', fontSize: '12px', color: 'var(--text-muted)' }}>
+                                <p style={{ margin: '5px 0 0 0', fontSize: window.innerWidth <= 768 ? '11px' : '12px', color: 'var(--text-muted)' }}>
                                     {studentAttendancePercent >= 75 ? '✓ You are on track' : '⚠ Attendance is low'}
                                 </p>
                             </div>
@@ -1085,21 +1094,21 @@ function ClassDashboard() {
                                         </div>
 
                                         {/* Calendar Navigation */}
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', gap: '8px' }}>
                                             <button
                                                 className="calendar-nav-btn"
                                                 onClick={() => setProfileModalViewDate(new Date(profileModalViewDate.getFullYear(), profileModalViewDate.getMonth() - 1, 1))}
-                                                style={{ padding: '5px 10px', fontSize: '14px' }}
+                                                style={{ padding: window.innerWidth <= 768 ? '4px 10px' : '5px 12px', fontSize: window.innerWidth <= 768 ? '12px' : '14px', flex: 1, minWidth: 0 }}
                                             >
                                                 &lt;
                                             </button>
-                                            <h4 style={{ margin: 0 }}>
-                                                {profileModalViewDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
+                                            <h4 style={{ margin: 0, fontSize: window.innerWidth <= 768 ? '13px' : '15px', whiteSpace: 'nowrap' }}>
+                                                {profileModalViewDate.toLocaleString('default', { month: 'short', year: 'numeric' })}
                                             </h4>
                                             <button
                                                 className="calendar-nav-btn"
                                                 onClick={() => setProfileModalViewDate(new Date(profileModalViewDate.getFullYear(), profileModalViewDate.getMonth() + 1, 1))}
-                                                style={{ padding: '5px 10px', fontSize: '14px' }}
+                                                style={{ padding: window.innerWidth <= 768 ? '4px 10px' : '5px 12px', fontSize: window.innerWidth <= 768 ? '12px' : '14px', flex: 1, minWidth: 0 }}
                                             >
                                                 &gt;
                                             </button>
@@ -1113,8 +1122,8 @@ function ClassDashboard() {
                                             marginBottom: '8px'
                                         }}>
                                             {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                                                <div key={day} style={{ textAlign: 'center', fontSize: '11px', fontWeight: 'bold', color: 'var(--text-muted)', padding: '5px' }}>
-                                                    {day}
+                                                <div key={day} style={{ textAlign: 'center', fontSize: window.innerWidth <= 768 ? '9px' : '11px', fontWeight: 'bold', color: 'var(--text-muted)', padding: '5px', wordBreak: 'break-word' }}>
+                                                    {window.innerWidth <= 768 ? day.charAt(0) : day}
                                                 </div>
                                             ))}
                                         </div>
@@ -1152,16 +1161,20 @@ function ClassDashboard() {
                                                         <div
                                                             key={day}
                                                             style={{
-                                                                padding: '8px',
+                                                                padding: window.innerWidth <= 768 ? '6px' : '8px',
                                                                 textAlign: 'center',
                                                                 borderRadius: '6px',
-                                                                fontSize: '12px',
+                                                                fontSize: window.innerWidth <= 768 ? '11px' : '12px',
                                                                 fontWeight: '500',
                                                                 background: isAttended ? 'rgba(0, 255, 136, 0.2)' : 'transparent',
                                                                 border: isAttended ? '1px solid rgba(0, 255, 136, 0.4)' : '1px solid var(--border-color)',
                                                                 color: isAttended ? '#00ff88' : 'var(--text-color)',
                                                                 cursor: 'default',
-                                                                transition: 'all 0.2s'
+                                                                transition: 'all 0.2s',
+                                                                minHeight: window.innerWidth <= 768 ? '28px' : '32px',
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                justifyContent: 'center'
                                                             }}
                                                         >
                                                             {day}
